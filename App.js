@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,11 @@ import PCLabScreen from './screens/PCLabScreen';
 import QuizScreen from './screens/QuizScreen';
 import TroubleshootingScreen from './screens/TroubleshootingScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import OnboardingScreen from './screens/OnboardingScreen';
+import LoginScreen from './screens/LoginScreen';
+import SignUpScreen from './screens/SignUpScreen';
+import Windows11SimulatorScreen from './screens/Windows11SimulatorScreen';
+import { authService } from './services/authService';
 
 const Tab = createBottomTabNavigator();
 
@@ -82,6 +87,84 @@ function CustomHeader({ title, showBadge = false }) {
 }
 
 export default function App() {
+  const [isFirstLaunch, setIsFirstLaunch] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showSignUp, setShowSignUp] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkUser();
+  }, []);
+
+  const checkUser = async () => {
+    try {
+      const user = await authService.getCurrentUser();
+      if (user) {
+        setIsLoggedIn(true);
+        setIsFirstLaunch(false);
+      }
+    } catch (error) {
+      const offlineUser = await authService.getOfflineUser();
+      if (offlineUser) {
+        setIsLoggedIn(true);
+        setIsFirstLaunch(false);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setIsFirstLaunch(false);
+  };
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+
+  const handleShowSignUp = () => {
+    setShowSignUp(true);
+  };
+
+  const handleBackToLogin = () => {
+    setShowSignUp(false);
+  };
+
+  const handleSignUpSuccess = () => {
+    setShowSignUp(false);
+    setIsLoggedIn(true);
+  };
+
+  if (loading) {
+    return null;
+  }
+
+  if (isFirstLaunch) {
+    return (
+      <>
+        <StatusBar style="light" backgroundColor="#0F172A" />
+        <OnboardingScreen onComplete={handleOnboardingComplete} />
+      </>
+    );
+  }
+
+  if (!isLoggedIn) {
+    if (showSignUp) {
+      return (
+        <>
+          <StatusBar style="light" backgroundColor="#0F172A" />
+          <SignUpScreen onSignUp={handleSignUpSuccess} onBackToLogin={handleBackToLogin} />
+        </>
+      );
+    }
+    return (
+      <>
+        <StatusBar style="light" backgroundColor="#0F172A" />
+        <LoginScreen onLogin={handleLogin} onSignUp={handleShowSignUp} />
+      </>
+    );
+  }
+
   return (
     <NavigationContainer>
       <StatusBar style="dark" backgroundColor="#F0FDF4" />
@@ -94,6 +177,8 @@ export default function App() {
               iconName = focused ? 'home' : 'home-outline';
             } else if (route.name === 'PC Lab') {
               iconName = focused ? 'desktop' : 'desktop-outline';
+            } else if (route.name === 'Windows 11') {
+              iconName = focused ? 'laptop' : 'laptop-outline';
             } else if (route.name === 'Quiz') {
               iconName = focused ? 'help-circle' : 'help-circle-outline';
             } else if (route.name === 'Troubleshoot') {
@@ -139,6 +224,15 @@ export default function App() {
           options={{ 
             title: 'PC Lab',
             tabBarLabel: 'PC Lab',
+            headerShown: false
+          }}
+        />
+        <Tab.Screen 
+          name="Windows 11" 
+          component={Windows11SimulatorScreen}
+          options={{ 
+            title: 'Windows 11',
+            tabBarLabel: 'Win 11',
             headerShown: false
           }}
         />
