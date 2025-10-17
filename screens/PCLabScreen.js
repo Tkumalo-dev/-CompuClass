@@ -21,7 +21,7 @@ export default function PCLabScreen({ navigation }) {
 
   const learningModules = [
     {
-      id: 'components',
+      id: 'overview',
       title: 'PC Components Overview',
       description: 'Learn about motherboards, CPUs, RAM, storage, and more',
       duration: '15 min',

@@ -1,78 +1,88 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
-import { View, Text } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Ionicons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
+import { View, Text } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { LinearGradient } from "expo-linear-gradient";
 
-import DashboardScreen from './screens/DashboardScreen';
-import PCLabScreen from './screens/PCLabScreen';
-import QuizScreen from './screens/QuizScreen';
-import TroubleshootingScreen from './screens/TroubleshootingScreen';
-import SettingsScreen from './screens/SettingsScreen';
+import DashboardScreen from "./screens/DashboardScreen";
+import PCLabScreen from "./screens/PCLabScreen";
+import QuizScreen from "./screens/QuizScreen";
+import TroubleshootingScreen from "./screens/TroubleshootingScreen";
+import SettingsScreen from "./screens/SettingsScreen";
+import ARScreen from "./screens/ARScreen";
 
 const Tab = createBottomTabNavigator();
 
 function CustomHeader({ title, showBadge = false }) {
   return (
     <LinearGradient
-      colors={['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.8)']}
+      colors={["rgba(255,255,255,0.9)", "rgba(255,255,255,0.8)"]}
       style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#E0F2FE',
+        borderBottomColor: "#E0F2FE",
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
         <LinearGradient
-          colors={['#10B981', '#059669']}
+          colors={["#10B981", "#059669"]}
           style={{
             width: 40,
             height: 40,
             borderRadius: 12,
-            alignItems: 'center',
-            justifyContent: 'center',
+            alignItems: "center",
+            justifyContent: "center",
             marginRight: 12,
           }}
         >
           <Ionicons name="desktop" size={20} color="#fff" />
         </LinearGradient>
         <View>
-          <Text style={{
-            fontSize: 18,
-            fontWeight: 'bold',
-            color: '#1F2937',
-          }}>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "bold",
+              color: "#1F2937",
+            }}
+          >
             CompuClass
           </Text>
-          <Text style={{
-            fontSize: 12,
-            color: '#6B7280',
-          }}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: "#6B7280",
+            }}
+          >
             Computer Learning Platform
           </Text>
         </View>
       </View>
-      
+
       {showBadge && (
-        <View style={{
-          backgroundColor: '#ECFDF5',
-          paddingHorizontal: 12,
-          paddingVertical: 6,
-          borderRadius: 12,
-          borderWidth: 1,
-          borderColor: '#10B981',
-        }}>
-          <Text style={{
-            fontSize: 12,
-            fontWeight: '600',
-            color: '#10B981',
-          }}>
+        <View
+          style={{
+            backgroundColor: "#ECFDF5",
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: "#10B981",
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: "600",
+              color: "#10B981",
+            }}
+          >
             Student Mode
           </Text>
         </View>
@@ -83,90 +93,105 @@ function CustomHeader({ title, showBadge = false }) {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <StatusBar style="dark" backgroundColor="#F0FDF4" />
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName;
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer>
+        <StatusBar style="dark" backgroundColor="#F0FDF4" />
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            tabBarIcon: ({ focused, color, size }) => {
+              let iconName;
 
-            if (route.name === 'Dashboard') {
-              iconName = focused ? 'home' : 'home-outline';
-            } else if (route.name === 'PC Lab') {
-              iconName = focused ? 'desktop' : 'desktop-outline';
-            } else if (route.name === 'Quiz') {
-              iconName = focused ? 'help-circle' : 'help-circle-outline';
-            } else if (route.name === 'Troubleshoot') {
-              iconName = focused ? 'bug' : 'bug-outline';
-            } else if (route.name === 'Settings') {
-              iconName = focused ? 'settings' : 'settings-outline';
-            }
+              if (route.name === "Dashboard") {
+                iconName = focused ? "home" : "home-outline";
+              } else if (route.name === "PC Lab") {
+                iconName = focused ? "desktop" : "desktop-outline";
+              } else if (route.name === "AR Lab") {
+                iconName = focused ? "cube" : "cube-outline";
+              } else if (route.name === "Quiz") {
+                iconName = focused ? "help-circle" : "help-circle-outline";
+              } else if (route.name === "Troubleshoot") {
+                iconName = focused ? "bug" : "bug-outline";
+              } else if (route.name === "Settings") {
+                iconName = focused ? "settings" : "settings-outline";
+              } else {
+                iconName = "alert-circle-outline";
+              }
 
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-          tabBarActiveTintColor: '#10B981',
-          tabBarInactiveTintColor: '#6B7280',
-          tabBarStyle: {
-            backgroundColor: '#fff',
-            borderTopColor: '#E5E7EB',
-            paddingBottom: 8,
-            paddingTop: 8,
-            height: 70,
-          },
-          tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '600',
-          },
-          header: ({ route }) => (
-            <CustomHeader 
-              title={route.name} 
-              showBadge={route.name === 'Dashboard'}
-            />
-          ),
-        })}
-      >
-        <Tab.Screen 
-          name="Dashboard" 
-          component={DashboardScreen}
-          options={{ 
-            title: 'Home',
-            tabBarLabel: 'Home'
-          }}
-        />
-        <Tab.Screen 
-          name="PC Lab" 
-          component={PCLabScreen}
-          options={{ 
-            title: 'PC Lab',
-            tabBarLabel: 'PC Lab',
-            headerShown: false
-          }}
-        />
-        <Tab.Screen 
-          name="Quiz" 
-          component={QuizScreen}
-          options={{ 
-            title: 'Quiz',
-            tabBarLabel: 'Quiz'
-          }}
-        />
-        <Tab.Screen 
-          name="Troubleshoot" 
-          component={TroubleshootingScreen}
-          options={{ 
-            title: 'Troubleshoot',
-            tabBarLabel: 'Debug'
-          }}
-        />
-        <Tab.Screen 
-          name="Settings" 
-          component={SettingsScreen}
-          options={{ 
-            title: 'Settings',
-            tabBarLabel: 'Settings'
-          }}
-        />
-      </Tab.Navigator>
-    </NavigationContainer>
+              return <Ionicons name={iconName} size={size} color={color} />;
+            },
+            tabBarActiveTintColor: "#10B981",
+            tabBarInactiveTintColor: "#6B7280",
+            tabBarStyle: {
+              backgroundColor: "#fff",
+              borderTopColor: "#E5E7EB",
+              paddingBottom: 8,
+              paddingTop: 8,
+              height: 70,
+            },
+            tabBarLabelStyle: {
+              fontSize: 12,
+              fontWeight: "600",
+            },
+            header: ({ route }) => (
+              <CustomHeader
+                title={route.name}
+                showBadge={route.name === "Dashboard"}
+              />
+            ),
+          })}
+        >
+          <Tab.Screen
+            name="Dashboard"
+            component={DashboardScreen}
+            options={{
+              title: "Home",
+              tabBarLabel: "Home",
+            }}
+          />
+          <Tab.Screen
+            name="PC Lab"
+            component={PCLabScreen}
+            options={{
+              title: "PC Lab",
+              tabBarLabel: "PC Lab",
+              headerShown: false,
+            }}
+          />
+          <Tab.Screen
+            name="AR Lab"
+            component={ARScreen}
+            options={{
+              title: "AR Lab",
+              tabBarLabel: "AR Lab",
+              headerShown: false,
+            }}
+          />
+          <Tab.Screen
+            name="Quiz"
+            component={QuizScreen}
+            options={{
+              title: "Quiz",
+              tabBarLabel: "Quiz",
+            }}
+          />
+          <Tab.Screen
+            name="Troubleshoot"
+            component={TroubleshootingScreen}
+            options={{
+              title: "Troubleshoot",
+              tabBarLabel: "Debug",
+            }}
+          />
+          <Tab.Screen
+            name="Settings"
+            component={SettingsScreen}
+            options={{
+              title: "Settings",
+              tabBarLabel: "Settings",
+            }}
+          />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }
