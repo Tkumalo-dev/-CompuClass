@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,50 @@ import {
   Alert,
   Dimensions,
   Image,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Camera } from 'expo-camera';
+import sketchfabService from '../services/echo3dService';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export default function PCLabScreen({ navigation }) {
   const [selectedModule, setSelectedModule] = useState(null);
   const [selectedComponents, setSelectedComponents] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [showARView, setShowARView] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [pcModel, setPcModel] = useState(null);
+
+  useEffect(() => {
+    loadPCModel();
+  }, []);
+
+  const enableCamera = async () => {
+    try {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      console.log('Camera permission status:', status);
+      setHasPermission(status === 'granted');
+      if (status === 'granted') {
+        setShowCamera(true);
+      }
+    } catch (error) {
+      console.error('Camera permission error:', error);
+      setHasPermission(false);
+    }
+  };
+
+  const loadPCModel = async () => {
+    try {
+      const model = await sketchfabService.getModel();
+      setPcModel(model);
+    } catch (error) {
+      console.error('Failed to load PC model:', error);
+    }
+  };
 
   const learningModules = [
     {
@@ -44,6 +78,18 @@ export default function PCLabScreen({ navigation }) {
       icon: 'construct',
       color: '#3B82F6',
       featured: true
+    },
+    {
+      id: 'ar-view',
+      title: 'AR PC Components View',
+      description: 'View 3D PC components in augmented reality using Sketchfab',
+      duration: '20 min',
+      difficulty: 'Beginner',
+      progress: 0,
+      lessons: 5,
+      type: 'ar',
+      icon: 'camera',
+      color: '#F59E0B'
     },
     {
       id: 'troubleshooting',
@@ -92,6 +138,12 @@ export default function PCLabScreen({ navigation }) {
   const handleModulePress = (moduleId) => {
     if (moduleId === 'assembly') {
       setSelectedModule('assembly');
+    } else if (moduleId === 'ar-view') {
+      if (hasPermission) {
+        setShowARView(true);
+      } else {
+        Alert.alert('Camera Permission', 'Camera access is required for AR features.');
+      }
     } else {
       Alert.alert('Coming Soon', `${learningModules.find(m => m.id === moduleId)?.title} module will be available soon!`);
     }
@@ -129,6 +181,77 @@ export default function PCLabScreen({ navigation }) {
   const getComponentStatus = (componentId) => {
     return selectedComponents.includes(componentId);
   };
+
+  if (showARView) {
+    return (
+      <View style={styles.container}>
+        {/* AR Header */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => setShowARView(false)}
+          >
+            <Ionicons name="arrow-back" size={24} color="#10B981" />
+            <Text style={styles.backText}>Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>AR PC Components</Text>
+        </View>
+
+        {/* Camera View */}
+        <View style={styles.cameraContainer}>
+          {hasPermission ? (
+            <Camera style={styles.camera} type={Camera.Constants.Type.back}>
+              <View style={styles.cameraOverlay}>
+                <View style={styles.arInfo}>
+                  <Ionicons name="scan" size={24} color="#fff" />
+                  <Text style={styles.arInfoText}>Point camera at surface to place PC components</Text>
+                </View>
+                
+                {/* AR Controls */}
+                <View style={styles.arControls}>
+                  <TouchableOpacity style={styles.arButton}>
+                    <Ionicons name="desktop" size={20} color="#fff" />
+                    <Text style={styles.arButtonText}>PC Case</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.arButton}>
+                    <Ionicons name="hardware-chip" size={20} color="#fff" />
+                    <Text style={styles.arButtonText}>CPU</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.arButton}>
+                    <Ionicons name="albums" size={20} color="#fff" />
+                    <Text style={styles.arButtonText}>RAM</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Camera>
+          ) : (
+            <View style={styles.noCamera}>
+              <Ionicons name="camera-off" size={48} color="#9CA3AF" />
+              <Text style={styles.noCameraText}>Camera access required for AR features</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Component Selection */}
+        <View style={styles.componentSelection}>
+          <Text style={styles.sectionTitle}>Select Component to View</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.componentList}>
+              {components.map((component) => (
+                <TouchableOpacity
+                  key={component.id}
+                  style={styles.componentButton}
+                >
+                  <Ionicons name={component.icon} size={24} color="#3B82F6" />
+                  <Text style={styles.componentButtonText}>{component.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    );
+  }
 
   if (selectedModule === 'assembly') {
     return (
@@ -168,34 +291,11 @@ export default function PCLabScreen({ navigation }) {
 
         {/* PC Case Visualization */}
         <View style={styles.pcCaseSection}>
-          <Text style={styles.sectionTitle}>PC Case</Text>
-          <View style={styles.pcCase}>
-            <Text style={styles.pcCaseTitle}>Computer Case</Text>
-            <View style={styles.installedComponents}>
-              {components.map((component) => (
-                <View
-                  key={component.id}
-                  style={[
-                    styles.componentSlot,
-                    getComponentStatus(component.id) && styles.componentInstalled
-                  ]}
-                >
-                  <Ionicons 
-                    name={component.icon} 
-                    size={20} 
-                    color={getComponentStatus(component.id) ? '#10B981' : '#D1D5DB'} 
-                  />
-                  <Text 
-                    style={[
-                      styles.componentSlotText,
-                      getComponentStatus(component.id) && styles.componentInstalledText
-                    ]}
-                  >
-                    {component.name}
-                  </Text>
-                </View>
-              ))}
-            </View>
+          <Text style={styles.sectionTitle}>3D PC Model</Text>
+          <View style={styles.pcModel3D}>
+            <Ionicons name="desktop" size={width < 400 ? 80 : 120} color="#3B82F6" />
+            <Text style={styles.pcModel3DText}>Interactive 3D PC Model</Text>
+            <Text style={styles.pcModel3DSubtext}>Explore computer components in 3D</Text>
           </View>
         </View>
 
@@ -263,6 +363,36 @@ export default function PCLabScreen({ navigation }) {
             <Ionicons name="desktop" size={20} color="#fff" />
           </View>
           <Text style={styles.headerTitle}>Virtual PC Lab</Text>
+        </View>
+      </View>
+
+      {/* PC Model Section */}
+      <View style={styles.pcModelSection}>
+        <Text style={styles.pcModelTitle}>3D PC Model</Text>
+        <View style={styles.pcModelDisplay}>
+          <Ionicons name="desktop" size={100} color="#3B82F6" />
+          <Text style={styles.pcModelName}>Personal Computer</Text>
+          <Text style={styles.pcModelInfo}>Interactive 3D Model from Sketchfab</Text>
+          <TouchableOpacity 
+            style={styles.viewModelButton}
+            onPress={() => {
+              console.log('Loading 3D model...');
+              Alert.alert(
+                '3D PC Model',
+                'Loading interactive 3D model from Sketchfab...',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Open Sketchfab', onPress: () => {
+                    const modelUrl = 'https://sketchfab.com/3d-models/personal-computer-aa398650fe6e4baa8771c71266d842f4';
+                    Linking.openURL(modelUrl);
+                  }}
+                ]
+              );
+            }}
+          >
+            <Ionicons name="eye" size={20} color="#fff" />
+            <Text style={styles.viewModelText}>View in 3D</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -374,7 +504,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingTop: 40,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
     backgroundColor: 'rgba(255,255,255,0.9)',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
@@ -407,18 +539,77 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1F2937',
   },
-  heroSection: {
-    padding: 24,
-    alignItems: 'center',
+  // PC Model Section Styles
+  pcModelSection: {
     backgroundColor: '#fff',
+    marginTop: 8,
+    marginHorizontal: 12,
+    marginBottom: 12,
+    borderRadius: 16,
+    padding: width < 400 ? 16 : 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  pcModelTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    textAlign: 'center',
     marginBottom: 16,
   },
+  pcModelDisplay: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#F0F9FF',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+  },
+  pcModelName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E40AF',
+    marginTop: 12,
+  },
+  pcModelInfo: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  viewModelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginTop: 16,
+  },
+  viewModelText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  heroSection: {
+    padding: width < 400 ? 12 : 20,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    marginBottom: 8,
+    marginHorizontal: 8,
+    borderRadius: 12,
+  },
   heroTitle: {
-    fontSize: 24,
+    fontSize: width < 400 ? 20 : 24,
     fontWeight: 'bold',
     color: '#1F2937',
     textAlign: 'center',
     marginBottom: 12,
+    lineHeight: width < 400 ? 26 : 30,
   },
   heroSubtitle: {
     fontSize: 16,
@@ -427,13 +618,14 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   modulesContainer: {
-    padding: 16,
+    padding: 8,
   },
   moduleCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    padding: width < 400 ? 16 : 20,
+    marginBottom: 12,
+    marginHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -447,11 +639,12 @@ const styles = StyleSheet.create({
   },
   featuredBadge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    top: 8,
+    right: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    zIndex: 1,
   },
   featuredText: {
     fontSize: 12,
@@ -462,6 +655,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 16,
+    marginTop: width < 400 ? 8 : 0,
+    paddingRight: width < 400 ? 80 : 60,
   },
   moduleIcon: {
     width: 48,
@@ -475,10 +670,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   moduleTitle: {
-    fontSize: 18,
+    fontSize: width < 400 ? 16 : 18,
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 8,
+    lineHeight: width < 400 ? 20 : 24,
   },
   moduleDescription: {
     fontSize: 14,
@@ -486,9 +682,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   moduleStats: {
-    flexDirection: 'row',
+    flexDirection: width < 400 ? 'column' : 'row',
     justifyContent: 'space-between',
     marginBottom: 16,
+    gap: width < 400 ? 8 : 0,
   },
   statItem: {
     flexDirection: 'row',
@@ -610,16 +807,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1F2937',
     marginBottom: 12,
+    textAlign: 'center',
+  },
+  pcCaseContainer: {
+    flexDirection: width < 400 ? 'column' : 'row',
+    gap: 16,
   },
   pcCase: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 20,
+    padding: width < 400 ? 16 : 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    flex: 1,
   },
   pcCaseTitle: {
     fontSize: 16,
@@ -627,6 +830,28 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     textAlign: 'center',
     marginBottom: 16,
+  },
+  pcModel3D: {
+    backgroundColor: '#F0F9FF',
+    padding: width < 400 ? 16 : 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+    borderStyle: 'dashed',
+    flex: width < 400 ? 0 : 1,
+    marginBottom: width < 400 ? 16 : 0,
+  },
+  pcModel3DText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1E40AF',
+    marginTop: 8,
+  },
+  pcModel3DSubtext: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
   },
   installedComponents: {
     gap: 8,
@@ -662,18 +887,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   componentCard: {
-    width: (width - 48) / 2,
+    width: (width - 56) / 2,
     backgroundColor: '#fff',
-    padding: 16,
+    padding: 12,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    marginHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
     position: 'relative',
+    minHeight: 100,
   },
   componentUsed: {
     backgroundColor: '#F9FAFB',
@@ -717,5 +944,92 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  // AR View Styles
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraOverlay: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  arInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 16,
+    borderRadius: 12,
+    alignSelf: 'center',
+    marginTop: 20,
+  },
+  arInfoText: {
+    color: '#fff',
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  arControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  arButton: {
+    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    minWidth: 80,
+  },
+  arButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  noCamera: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+  },
+  noCameraText: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  componentSelection: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: 150,
+  },
+  componentList: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  componentButton: {
+    backgroundColor: '#F0F9FF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0F2FE',
+    minWidth: 80,
+  },
+  componentButtonText: {
+    fontSize: 12,
+    color: '#1E40AF',
+    fontWeight: '600',
+    marginTop: 4,
+    textAlign: 'center',
   },
 });

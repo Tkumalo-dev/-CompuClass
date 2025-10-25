@@ -35,14 +35,6 @@ export default function DashboardScreen({ navigation }) {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Welcome Section */}
-      <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeTitle}>Welcome to Your Computer Learning Journey</Text>
-        <Text style={styles.welcomeSubtitle}>
-          Master PC hardware through interactive simulations, drag-and-drop assembly, and hands-on troubleshooting challenges
-        </Text>
-      </View>
-
       {/* Main Action Card */}
       <TouchableOpacity
         style={styles.mainActionCard}
@@ -129,28 +121,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F0FDF4',
-  },
-  welcomeSection: {
-    padding: 24,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    marginBottom: 16,
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  welcomeSubtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 24,
+    paddingTop: 40,
   },
   mainActionCard: {
-    margin: 16,
+    marginTop: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',

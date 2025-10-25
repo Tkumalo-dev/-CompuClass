@@ -55,12 +55,7 @@ function CustomHeader({ title, showBadge = false }) {
           }}>
             CompuClass
           </Text>
-          <Text style={{
-            fontSize: 12,
-            color: '#6B7280',
-          }}>
-            Computer Learning Platform
-          </Text>
+
         </View>
       </View>
       
@@ -202,12 +197,7 @@ export default function App() {
             fontSize: 12,
             fontWeight: '600',
           },
-          header: ({ route }) => (
-            <CustomHeader 
-              title={route.name} 
-              showBadge={route.name === 'Dashboard'}
-            />
-          ),
+          headerShown: false,
         })}
       >
         <Tab.Screen 
