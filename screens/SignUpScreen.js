@@ -22,6 +22,7 @@ export default function SignUpScreen({ onSignUp, onBackToLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('student');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,7 +45,7 @@ export default function SignUpScreen({ onSignUp, onBackToLogin }) {
 
     setLoading(true);
     try {
-      await authService.signUp(email, password, fullName);
+      await authService.signUp(email, password, fullName, role);
       Alert.alert('Success', 'Account created! Please check your email to verify.', [
         { text: 'OK', onPress: onSignUp }
       ]);
@@ -88,6 +89,24 @@ export default function SignUpScreen({ onSignUp, onBackToLogin }) {
 
           {/* Sign Up Form */}
           <View style={styles.formContainer}>
+            {/* Role Selection */}
+            <View style={styles.roleContainer}>
+              <TouchableOpacity
+                style={[styles.roleButton, role === 'student' && styles.roleButtonActive]}
+                onPress={() => setRole('student')}
+              >
+                <Ionicons name="school" size={24} color={role === 'student' ? '#fff' : '#64748B'} />
+                <Text style={[styles.roleText, role === 'student' && styles.roleTextActive]}>Student</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roleButton, role === 'lecturer' && styles.roleButtonActive]}
+                onPress={() => setRole('lecturer')}
+              >
+                <Ionicons name="person" size={24} color={role === 'lecturer' ? '#fff' : '#64748B'} />
+                <Text style={[styles.roleText, role === 'lecturer' && styles.roleTextActive]}>Lecturer</Text>
+              </TouchableOpacity>
+            </View>
+
             {/* Full Name Input */}
             <View style={styles.inputContainer}>
               <Ionicons name="person-outline" size={20} color="#64748B" style={styles.inputIcon} />
@@ -315,5 +334,34 @@ const styles = StyleSheet.create({
     color: '#10B981',
     fontSize: 16,
     fontWeight: '600',
+  },
+  roleContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  roleButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 16,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  roleButtonActive: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  roleText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  roleTextActive: {
+    color: '#fff',
   },
 });

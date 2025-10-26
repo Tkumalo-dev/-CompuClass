@@ -11,10 +11,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 export default function PCLabScreen({ navigation }) {
+  const { theme } = useTheme();
   const [selectedModule, setSelectedModule] = useState(null);
   const [selectedComponents, setSelectedComponents] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -132,23 +134,23 @@ export default function PCLabScreen({ navigation }) {
 
   if (selectedModule === 'assembly') {
     return (
-      <ScrollView style={styles.container}>
+      <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
           <TouchableOpacity 
             style={styles.backButton}
             onPress={() => setSelectedModule(null)}
           >
-            <Ionicons name="arrow-back" size={24} color="#10B981" />
-            <Text style={styles.backText}>Back</Text>
+            <Ionicons name="arrow-back" size={24} color={theme.primary} />
+            <Text style={[styles.backText, { color: theme.primary }]}>Back</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Interactive PC Building Lab</Text>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Interactive PC Building Lab</Text>
         </View>
 
         {/* Progress Section */}
-        <View style={styles.progressSection}>
-          <Text style={styles.progressTitle}>Assembly Progress</Text>
-          <View style={styles.progressBar}>
+        <View style={[styles.progressSection, { backgroundColor: theme.card }]}>
+          <Text style={[styles.progressTitle, { color: theme.text }]}>Assembly Progress</Text>
+          <View style={[styles.progressBar, { backgroundColor: theme.borderLight }]}>
             <View 
               style={[
                 styles.progressFill, 
@@ -156,11 +158,11 @@ export default function PCLabScreen({ navigation }) {
               ]} 
             />
           </View>
-          <Text style={styles.progressText}>
+          <Text style={[styles.progressText, { color: theme.textSecondary }]}>
             Step {currentStep + 1} of {steps.length}
           </Text>
           {currentStep < steps.length && (
-            <Text style={styles.currentStep}>
+            <Text style={[styles.currentStep, { color: theme.primary }]}>
               Next: {steps[currentStep]}
             </Text>
           )}
@@ -168,16 +170,17 @@ export default function PCLabScreen({ navigation }) {
 
         {/* PC Case Visualization */}
         <View style={styles.pcCaseSection}>
-          <Text style={styles.sectionTitle}>PC Case</Text>
-          <View style={styles.pcCase}>
-            <Text style={styles.pcCaseTitle}>Computer Case</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>PC Case</Text>
+          <View style={[styles.pcCase, { backgroundColor: theme.card }]}>
+            <Text style={[styles.pcCaseTitle, { color: theme.text }]}>Computer Case</Text>
             <View style={styles.installedComponents}>
               {components.map((component) => (
                 <View
                   key={component.id}
                   style={[
                     styles.componentSlot,
-                    getComponentStatus(component.id) && styles.componentInstalled
+                    { backgroundColor: theme.surface, borderColor: theme.border },
+                    getComponentStatus(component.id) && { backgroundColor: theme.primary + '20', borderColor: theme.primary }
                   ]}
                 >
                   <Ionicons 
@@ -188,7 +191,8 @@ export default function PCLabScreen({ navigation }) {
                   <Text 
                     style={[
                       styles.componentSlotText,
-                      getComponentStatus(component.id) && styles.componentInstalledText
+                      { color: theme.textSecondary },
+                      getComponentStatus(component.id) && { color: theme.primary, fontWeight: '600' }
                     ]}
                   >
                     {component.name}
@@ -201,14 +205,15 @@ export default function PCLabScreen({ navigation }) {
 
         {/* Components Section */}
         <View style={styles.componentsSection}>
-          <Text style={styles.sectionTitle}>Available Components</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Components</Text>
           <View style={styles.componentsGrid}>
             {components.map((component) => (
               <TouchableOpacity
                 key={component.id}
                 style={[
                   styles.componentCard,
-                  getComponentStatus(component.id) && styles.componentUsed
+                  { backgroundColor: theme.card },
+                  getComponentStatus(component.id) && { backgroundColor: theme.surface, opacity: 0.7 }
                 ]}
                 onPress={() => handleComponentPress(component.id)}
                 disabled={getComponentStatus(component.id)}
@@ -221,7 +226,8 @@ export default function PCLabScreen({ navigation }) {
                 <Text 
                   style={[
                     styles.componentName,
-                    getComponentStatus(component.id) && styles.componentUsedText
+                    { color: theme.text },
+                    getComponentStatus(component.id) && { color: theme.textTertiary }
                   ]}
                 >
                   {component.name}
@@ -248,30 +254,30 @@ export default function PCLabScreen({ navigation }) {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#10B981" />
-          <Text style={styles.backText}>Back</Text>
+          <Ionicons name="arrow-back" size={24} color={theme.primary} />
+          <Text style={[styles.backText, { color: theme.primary }]}>Back</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <View style={styles.headerIcon}>
+          <View style={[styles.headerIcon, { backgroundColor: theme.primary }]}>
             <Ionicons name="desktop" size={20} color="#fff" />
           </View>
-          <Text style={styles.headerTitle}>Virtual PC Lab</Text>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Virtual PC Lab</Text>
         </View>
       </View>
 
       {/* Hero Section */}
-      <View style={styles.heroSection}>
-        <Text style={styles.heroTitle}>
+      <View style={[styles.heroSection, { backgroundColor: theme.card }]}>
+        <Text style={[styles.heroTitle, { color: theme.text }]}>
           Master PC Hardware Through Interactive Learning
         </Text>
-        <Text style={styles.heroSubtitle}>
+        <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
           Build, diagnose, and troubleshoot PCs in a safe virtual environment
         </Text>
       </View>
@@ -283,7 +289,8 @@ export default function PCLabScreen({ navigation }) {
             key={module.id}
             style={[
               styles.moduleCard,
-              module.featured && styles.featuredModule
+              { backgroundColor: theme.card },
+              module.featured && { borderWidth: 2, borderColor: theme.primary }
             ]}
             onPress={() => handleModulePress(module.id)}
           >
@@ -301,32 +308,32 @@ export default function PCLabScreen({ navigation }) {
                 <Ionicons name={module.icon} size={24} color="#fff" />
               </View>
               <View style={styles.moduleInfo}>
-                <Text style={styles.moduleTitle}>{module.title}</Text>
-                <Text style={styles.moduleDescription}>{module.description}</Text>
+                <Text style={[styles.moduleTitle, { color: theme.text }]}>{module.title}</Text>
+                <Text style={[styles.moduleDescription, { color: theme.textSecondary }]}>{module.description}</Text>
               </View>
             </View>
 
             <View style={styles.moduleStats}>
               <View style={styles.statItem}>
                 <Ionicons name="time" size={16} color="#6B7280" />
-                <Text style={styles.statText}>{module.duration}</Text>
+                <Text style={[styles.statText, { color: theme.textSecondary }]}>{module.duration}</Text>
               </View>
               <View style={styles.statItem}>
                 <Ionicons name="book" size={16} color="#6B7280" />
-                <Text style={styles.statText}>{module.lessons} lessons</Text>
+                <Text style={[styles.statText, { color: theme.textSecondary }]}>{module.lessons} lessons</Text>
               </View>
               <View style={styles.statItem}>
                 <Ionicons name="trophy" size={16} color="#6B7280" />
-                <Text style={styles.statText}>{module.difficulty}</Text>
+                <Text style={[styles.statText, { color: theme.textSecondary }]}>{module.difficulty}</Text>
               </View>
             </View>
 
             <View style={styles.progressContainer}>
               <View style={styles.progressInfo}>
-                <Text style={styles.progressLabel}>Progress</Text>
-                <Text style={styles.progressPercent}>{module.progress}%</Text>
+                <Text style={[styles.progressLabel, { color: theme.textSecondary }]}>Progress</Text>
+                <Text style={[styles.progressPercent, { color: theme.text }]}>{module.progress}%</Text>
               </View>
-              <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBarContainer, { backgroundColor: theme.borderLight }]}>
                 <View 
                   style={[
                     styles.progressBarFill, 

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../context/ThemeContext';
 
 const troubleshootingScenarios = [
   {
@@ -119,6 +120,7 @@ const troubleshootingScenarios = [
 ];
 
 export default function TroubleshootingScreen() {
+  const { theme } = useTheme();
   const [selectedScenario, setSelectedScenario] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [userSolution, setUserSolution] = useState('');
@@ -158,7 +160,7 @@ export default function TroubleshootingScreen() {
 
   if (!selectedScenario) {
     return (
-      <ScrollView style={styles.container}>
+      <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
         <LinearGradient
           colors={['#EF4444', '#DC2626']}
           style={styles.headerGradient}
@@ -171,40 +173,41 @@ export default function TroubleshootingScreen() {
         </LinearGradient>
 
         <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{completedScenarios.length}</Text>
-            <Text style={styles.statLabel}>Completed</Text>
+          <View style={[styles.statCard, { backgroundColor: theme.card }]}>
+            <Text style={[styles.statNumber, { color: '#EF4444' }]}>{completedScenarios.length}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Completed</Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{troubleshootingScenarios.length}</Text>
-            <Text style={styles.statLabel}>Total Scenarios</Text>
+          <View style={[styles.statCard, { backgroundColor: theme.card }]}>
+            <Text style={[styles.statNumber, { color: '#EF4444' }]}>{troubleshootingScenarios.length}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Total Scenarios</Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>
+          <View style={[styles.statCard, { backgroundColor: theme.card }]}>
+            <Text style={[styles.statNumber, { color: '#EF4444' }]}>
               {Math.round((completedScenarios.length / troubleshootingScenarios.length) * 100)}%
             </Text>
-            <Text style={styles.statLabel}>Progress</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Progress</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Choose a Troubleshooting Scenario</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Choose a Troubleshooting Scenario</Text>
 
         {troubleshootingScenarios.map((scenario) => (
           <TouchableOpacity
             key={scenario.id}
             style={[
               styles.scenarioCard,
-              completedScenarios.includes(scenario.id) && styles.completedCard
+              { backgroundColor: theme.card },
+              completedScenarios.includes(scenario.id) && { borderWidth: 2, borderColor: theme.primary }
             ]}
             onPress={() => selectScenario(scenario)}
           >
             <View style={styles.scenarioHeader}>
-              <Text style={styles.scenarioTitle}>{scenario.title}</Text>
+              <Text style={[styles.scenarioTitle, { color: theme.text }]}>{scenario.title}</Text>
               {completedScenarios.includes(scenario.id) && (
                 <Ionicons name="checkmark-circle" size={24} color="#10B981" />
               )}
             </View>
-            <Text style={styles.scenarioDescription}>{scenario.description}</Text>
+            <Text style={[styles.scenarioDescription, { color: theme.textSecondary }]}>{scenario.description}</Text>
             
             <View style={styles.symptomsContainer}>
               <Text style={styles.symptomsTitle}>Symptoms:</Text>
@@ -222,22 +225,22 @@ export default function TroubleshootingScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.scenarioHeader}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
+      <View style={[styles.scenarioHeader, { backgroundColor: theme.card }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => setSelectedScenario(null)}
         >
-          <Ionicons name="arrow-back" size={24} color="#3B82F6" />
+          <Ionicons name="arrow-back" size={24} color={theme.primary} />
         </TouchableOpacity>
-        <Text style={styles.scenarioTitle}>{selectedScenario.title}</Text>
+        <Text style={[styles.scenarioTitle, { color: theme.text }]}>{selectedScenario.title}</Text>
       </View>
 
-      <View style={styles.progressContainer}>
-        <Text style={styles.progressText}>
+      <View style={[styles.progressContainer, { backgroundColor: theme.card }]}>
+        <Text style={[styles.progressText, { color: theme.textSecondary }]}>
           Step {currentStep + 1} of {selectedScenario.steps.length}
         </Text>
-        <View style={styles.progressBar}>
+        <View style={[styles.progressBar, { backgroundColor: theme.borderLight }]}>
           <View 
             style={[
               styles.progressFill, 
@@ -247,34 +250,34 @@ export default function TroubleshootingScreen() {
         </View>
       </View>
 
-      <View style={styles.problemDescription}>
-        <Text style={styles.problemTitle}>Problem Description</Text>
-        <Text style={styles.problemText}>{selectedScenario.description}</Text>
+      <View style={[styles.problemDescription, { backgroundColor: theme.card }]}>
+        <Text style={[styles.problemTitle, { color: theme.text }]}>Problem Description</Text>
+        <Text style={[styles.problemText, { color: theme.textSecondary }]}>{selectedScenario.description}</Text>
       </View>
 
       <View style={styles.symptomsSection}>
-        <Text style={styles.sectionTitle}>Observed Symptoms</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Observed Symptoms</Text>
         {selectedScenario.symptoms.map((symptom, index) => (
-          <View key={index} style={styles.symptomItem}>
+          <View key={index} style={[styles.symptomItem, { backgroundColor: theme.card }]}>
             <Ionicons name="warning" size={16} color="#F59E0B" />
-            <Text style={styles.symptomText}>{symptom}</Text>
+            <Text style={[styles.symptomText, { color: theme.text }]}>{symptom}</Text>
           </View>
         ))}
       </View>
 
       <View style={styles.currentStepSection}>
-        <Text style={styles.sectionTitle}>Current Troubleshooting Step</Text>
-        <View style={styles.stepCard}>
-          <Text style={styles.stepText}>{selectedScenario.steps[currentStep]}</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Current Troubleshooting Step</Text>
+        <View style={[styles.stepCard, { backgroundColor: '#3B82F6' + '20', borderColor: '#3B82F6' }]}>
+          <Text style={[styles.stepText, { color: '#1E40AF' }]}>{selectedScenario.steps[currentStep]}</Text>
         </View>
       </View>
 
       <View style={styles.possibleCausesSection}>
-        <Text style={styles.sectionTitle}>Possible Causes</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Possible Causes</Text>
         {selectedScenario.possibleCauses.map((cause, index) => (
-          <View key={index} style={styles.causeItem}>
+          <View key={index} style={[styles.causeItem, { backgroundColor: theme.card }]}>
             <View style={styles.causeHeader}>
-              <Text style={styles.causeText}>{cause.cause}</Text>
+              <Text style={[styles.causeText, { color: theme.text }]}>{cause.cause}</Text>
               <View style={[
                 styles.likelihoodBadge,
                 { backgroundColor: 
@@ -285,7 +288,7 @@ export default function TroubleshootingScreen() {
                 <Text style={styles.likelihoodText}>{cause.likelihood}</Text>
               </View>
             </View>
-            <Text style={styles.solutionText}>Solution: {cause.solution}</Text>
+            <Text style={[styles.solutionText, { color: theme.textSecondary }]}>Solution: {cause.solution}</Text>
           </View>
         ))}
       </View>

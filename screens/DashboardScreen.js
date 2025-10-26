@@ -9,10 +9,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen({ navigation }) {
+  const { theme } = useTheme();
   const stats = [
     { title: 'Learning Modules', value: '25+', icon: 'library', color: '#10B981' },
     { title: 'PC Components', value: '50+', icon: 'hardware-chip', color: '#3B82F6' },
@@ -34,11 +36,11 @@ export default function DashboardScreen({ navigation }) {
   ];
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
       {/* Welcome Section */}
-      <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeTitle}>Welcome to Your Computer Learning Journey</Text>
-        <Text style={styles.welcomeSubtitle}>
+      <View style={[styles.welcomeSection, { backgroundColor: theme.card }]}>
+        <Text style={[styles.welcomeTitle, { color: theme.text }]}>Welcome to Your Computer Learning Journey</Text>
+        <Text style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>
           Master PC hardware through interactive simulations, drag-and-drop assembly, and hands-on troubleshooting challenges
         </Text>
       </View>
@@ -64,16 +66,16 @@ export default function DashboardScreen({ navigation }) {
             {/* Learning Features Grid */}
             <View style={styles.learningFeaturesGrid}>
               {learningFeatures.map((feature, index) => (
-                <View key={index} style={styles.learningFeatureItem}>
+                <View key={index} style={[styles.learningFeatureItem, { backgroundColor: theme.card }]}>
                   <Ionicons name={feature.icon} size={20} color={feature.color} />
-                  <Text style={styles.learningFeatureText}>{feature.title}</Text>
+                  <Text style={[styles.learningFeatureText, { color: theme.text }]}>{feature.title}</Text>
                 </View>
               ))}
             </View>
             
-            <View style={styles.startButton}>
-              <Ionicons name="hardware-chip" size={20} color="#10B981" />
-              <Text style={styles.startButtonText}>Start Learning Now</Text>
+            <View style={[styles.startButton, { backgroundColor: theme.card }]}>
+              <Ionicons name="hardware-chip" size={20} color={theme.primary} />
+              <Text style={[styles.startButtonText, { color: theme.primary }]}>Start Learning Now</Text>
             </View>
           </View>
         </LinearGradient>
@@ -83,9 +85,9 @@ export default function DashboardScreen({ navigation }) {
       <View style={styles.statsContainer}>
         <View style={styles.statsGrid}>
           {stats.map((stat, index) => (
-            <View key={index} style={styles.statCard}>
+            <View key={index} style={[styles.statCard, { backgroundColor: theme.card }]}>
               <Text style={[styles.statValue, { color: stat.color }]}>{stat.value}</Text>
-              <Text style={styles.statTitle}>{stat.title}</Text>
+              <Text style={[styles.statTitle, { color: theme.textSecondary }]}>{stat.title}</Text>
             </View>
           ))}
         </View>
@@ -114,11 +116,11 @@ export default function DashboardScreen({ navigation }) {
         </View>
         
         <TouchableOpacity 
-          style={styles.tryButton}
+          style={[styles.tryButton, { backgroundColor: theme.card }]}
           onPress={() => navigation.navigate('PC Lab')}
         >
-          <Ionicons name="hardware-chip" size={20} color="#10B981" />
-          <Text style={styles.tryButtonText}>Try the PC Building Simulator</Text>
+          <Ionicons name="hardware-chip" size={20} color={theme.primary} />
+          <Text style={[styles.tryButtonText, { color: theme.primary }]}>Try the PC Building Simulator</Text>
         </TouchableOpacity>
       </LinearGradient>
     </ScrollView>
