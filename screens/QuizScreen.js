@@ -10,58 +10,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const quizQuestions = [
-  {
-    id: 1,
-    question: "What is the main function of a CPU?",
-    options: [
-      "Store data permanently",
-      "Process instructions and calculations",
-      "Display graphics",
-      "Connect to the internet"
-    ],
-    correct: 1,
-    explanation: "The CPU (Central Processing Unit) is the brain of the computer that processes instructions and performs calculations."
-  },
-  {
-    id: 2,
-    question: "Which component stores data temporarily while the computer is running?",
-    options: ["Hard Drive", "RAM", "CPU", "Power Supply"],
-    correct: 1,
-    explanation: "RAM (Random Access Memory) stores data temporarily while the computer is running and loses data when power is turned off."
-  },
-  {
-    id: 3,
-    question: "What does GPU stand for?",
-    options: [
-      "General Processing Unit",
-      "Graphics Processing Unit", 
-      "Gaming Performance Unit",
-      "Global Processing Unit"
-    ],
-    correct: 1,
-    explanation: "GPU stands for Graphics Processing Unit, which handles rendering graphics and visual processing."
-  },
-  {
-    id: 4,
-    question: "Which connector is commonly used for modern monitors?",
-    options: ["VGA", "HDMI", "PS/2", "USB-A"],
-    correct: 1,
-    explanation: "HDMI (High-Definition Multimedia Interface) is the most common connector for modern monitors and displays."
-  },
-  {
-    id: 5,
-    question: "What is the purpose of a motherboard?",
-    options: [
-      "Cool the system",
-      "Store files",
-      "Connect all components together",
-      "Provide internet connection"
-    ],
-    correct: 2,
-    explanation: "The motherboard is the main circuit board that connects and allows communication between all computer components."
-  }
-];
 
 export default function QuizScreen() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -99,11 +47,11 @@ export default function QuizScreen() {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setShowResult(false);
+      setShowResult(true);
     } else {
       setQuizCompleted(true);
+      setShowResult(true);
     }
-    
-    setShowResult(true);
   };
 
   const resetQuiz = () => {
