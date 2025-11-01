@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Camera } from 'expo-camera';
 import RealAR from '../components/RealAR';
 
+
 const { width, height } = Dimensions.get('window');
 
 export default function PCLabScreen({ navigation }) {
@@ -19,6 +20,12 @@ export default function PCLabScreen({ navigation }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showMotherboardFullscreen, setShowMotherboardFullscreen] = useState(false);
+  const [showCPUFullscreen, setShowCPUFullscreen] = useState(false);
+  const [showRAMFullscreen, setShowRAMFullscreen] = useState(false);
+  const [showGPUFullscreen, setShowGPUFullscreen] = useState(false);
+  const [showStorageFullscreen, setShowStorageFullscreen] = useState(false);
+  const [showPSUFullscreen, setShowPSUFullscreen] = useState(false);
 
   const components = [
     { id: 'motherboard', name: 'Motherboard', icon: 'hardware-chip' },
@@ -39,6 +46,31 @@ export default function PCLabScreen({ navigation }) {
   ];
 
   const handleComponentPress = (componentId) => {
+    if (componentId === 'motherboard') {
+      setShowMotherboardFullscreen(true);
+      return;
+    }
+    if (componentId === 'cpu') {
+      setShowCPUFullscreen(true);
+      return;
+    }
+    if (componentId === 'ram') {
+      setShowRAMFullscreen(true);
+      return;
+    }
+    if (componentId === 'gpu') {
+      setShowGPUFullscreen(true);
+      return;
+    }
+    if (componentId === 'storage') {
+      setShowStorageFullscreen(true);
+      return;
+    }
+    if (componentId === 'psu') {
+      setShowPSUFullscreen(true);
+      return;
+    }
+    
     if (currentStep < steps.length) {
       const expectedComponent = components[currentStep];
       
@@ -70,6 +102,102 @@ export default function PCLabScreen({ navigation }) {
   const getComponentStatus = (componentId) => {
     return selectedComponents.includes(componentId);
   };
+
+  if (showMotherboardFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowMotherboardFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.fullscreen3D}>
+          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>Motherboard Component</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (showCPUFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowCPUFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.fullscreen3D}>
+          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>CPU Component</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (showRAMFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowRAMFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.fullscreen3D}>
+          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>RAM Component</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (showGPUFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowGPUFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.fullscreen3D}>
+          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>GPU Component</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (showStorageFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowStorageFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.fullscreen3D}>
+          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>Storage Component</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (showPSUFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowPSUFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.fullscreen3D}>
+          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>PSU Component</Text>
+        </View>
+      </View>
+    );
+  }
 
   if (isFullscreen) {
     return (
@@ -300,6 +428,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  component3D: {
+    width: 60,
+    height: 40,
+    borderRadius: 4,
+  },
 
   // Fullscreen Styles
   fullscreenContainer: {
@@ -375,5 +508,13 @@ const styles = StyleSheet.create({
     color: '#E5E7EB',
     marginLeft: 12,
     flex: 1,
+  },
+  fullscreen3D: {
+    flex: 1,
+  },
+  component3D: {
+    width: 60,
+    height: 40,
+    borderRadius: 4,
   },
 });

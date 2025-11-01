@@ -45,12 +45,48 @@ export default function RealAR() {
       const loader = new GLTFLoader();
       const glbUrl = 'https://drive.google.com/uc?export=download&id=1iIlf5QJNhljHqSUNFXvGPvwSzKa_7ryd';
       
+      // Suppress texture loading errors
+      const originalConsoleError = console.error;
+      console.error = (...args) => {
+        const message = args.join(' ');
+        if (!message.includes('GLTFLoader') && !message.includes('texture')) {
+          originalConsoleError(...args);
+        }
+      };
+
       const model = await new Promise((resolve, reject) => {
         loader.load(
           glbUrl,
-          (gltf) => resolve(gltf),
+          (gltf) => {
+            // Restore console.error
+            console.error = originalConsoleError;
+            
+            // Remove textures to avoid loading errors
+            gltf.scene.traverse((child) => {
+              if (child.isMesh && child.material) {
+                if (Array.isArray(child.material)) {
+                  child.material.forEach(mat => {
+                    mat.map = null;
+                    mat.normalMap = null;
+                    mat.roughnessMap = null;
+                    mat.metalnessMap = null;
+                  });
+                } else {
+                  child.material.map = null;
+                  child.material.normalMap = null;
+                  child.material.roughnessMap = null;
+                  child.material.metalnessMap = null;
+                }
+              }
+            });
+            resolve(gltf);
+          },
           undefined,
-          (error) => reject(error)
+          (error) => {
+            // Restore console.error
+            console.error = originalConsoleError;
+            reject(error);
+          }
         );
       });
       
@@ -60,7 +96,7 @@ export default function RealAR() {
       modelRef.current = model.scene;
       
       scene.add(model.scene);
-      console.log('GLB model loaded successfully');
+      console.log('GLB model loaded successfully (textures disabled)');
       setLoading(false);
 
       // Animation loop
