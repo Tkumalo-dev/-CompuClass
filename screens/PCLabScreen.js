@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,79 +7,35 @@ import {
   StyleSheet,
   Alert,
   Dimensions,
-  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 
-const { width } = Dimensions.get('window');
+
+const { width, height } = Dimensions.get('window');
 
 export default function PCLabScreen({ navigation }) {
   const { theme } = useTheme();
   const [selectedModule, setSelectedModule] = useState(null);
   const [selectedComponents, setSelectedComponents] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
-
-  const learningModules = [
-    {
-      id: 'overview',
-      title: 'PC Components Overview',
-      description: 'Learn about motherboards, CPUs, RAM, storage, and more',
-      duration: '15 min',
-      difficulty: 'Beginner',
-      progress: 80,
-      lessons: 8,
-      type: 'theory',
-      icon: 'hardware-chip',
-      color: '#10B981'
-    },
-    {
-      id: 'assembly',
-      title: 'Interactive PC Building Lab',
-      description: 'Real-time drag & drop PC assembly with guided tutorials',
-      duration: '30 min',
-      difficulty: 'Intermediate',
-      progress: 40,
-      lessons: 15,
-      type: 'practical',
-      icon: 'construct',
-      color: '#3B82F6',
-      featured: true
-    },
-    {
-      id: 'troubleshooting',
-      title: 'Hardware Troubleshooting',
-      description: 'Interactive problem diagnosis and component replacement',
-      duration: '25 min',
-      difficulty: 'Advanced',
-      progress: 30,
-      lessons: 12,
-      type: 'practical',
-      icon: 'bug',
-      color: '#EF4444'
-    },
-    {
-      id: 'quiz',
-      title: 'Enhanced Knowledge Quiz',
-      description: 'Comprehensive quiz covering all PC topics with detailed explanations',
-      duration: '15 min',
-      difficulty: 'All Levels',
-      progress: 0,
-      lessons: 25,
-      type: 'assessment',
-      icon: 'help-circle',
-      color: '#8B5CF6'
-    }
-  ];
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [showMotherboardFullscreen, setShowMotherboardFullscreen] = useState(false);
+  const [showCPUFullscreen, setShowCPUFullscreen] = useState(false);
+  const [showRAMFullscreen, setShowRAMFullscreen] = useState(false);
+  const [showGPUFullscreen, setShowGPUFullscreen] = useState(false);
+  const [showStorageFullscreen, setShowStorageFullscreen] = useState(false);
+  const [showPSUFullscreen, setShowPSUFullscreen] = useState(false);
 
   const components = [
-    { id: 'motherboard', name: 'Motherboard', icon: 'hardware-chip', installed: false },
-    { id: 'cpu', name: 'CPU', icon: 'speedometer', installed: false },
-    { id: 'ram', name: 'RAM', icon: 'albums', installed: false },
-    { id: 'gpu', name: 'Graphics Card', icon: 'tv', installed: false },
-    { id: 'storage', name: 'Storage (SSD)', icon: 'save', installed: false },
-    { id: 'psu', name: 'Power Supply', icon: 'battery-charging', installed: false },
+    { id: 'motherboard', name: 'Motherboard', icon: 'hardware-chip' },
+    { id: 'cpu', name: 'CPU', icon: 'speedometer' },
+    { id: 'ram', name: 'RAM', icon: 'albums' },
+    { id: 'gpu', name: 'Graphics Card', icon: 'tv' },
+    { id: 'storage', name: 'Storage (SSD)', icon: 'save' },
+    { id: 'psu', name: 'Power Supply', icon: 'battery-charging' },
   ];
 
   const steps = [
@@ -91,15 +47,32 @@ export default function PCLabScreen({ navigation }) {
     'Connect Power Supply',
   ];
 
-  const handleModulePress = (moduleId) => {
-    if (moduleId === 'assembly') {
-      setSelectedModule('assembly');
-    } else {
-      Alert.alert('Coming Soon', `${learningModules.find(m => m.id === moduleId)?.title} module will be available soon!`);
-    }
-  };
-
   const handleComponentPress = (componentId) => {
+    if (componentId === 'motherboard') {
+      setShowMotherboardFullscreen(true);
+      return;
+    }
+    if (componentId === 'cpu') {
+      setShowCPUFullscreen(true);
+      return;
+    }
+    if (componentId === 'ram') {
+      setShowRAMFullscreen(true);
+      return;
+    }
+    if (componentId === 'gpu') {
+      setShowGPUFullscreen(true);
+      return;
+    }
+    if (componentId === 'storage') {
+      setShowStorageFullscreen(true);
+      return;
+    }
+    if (componentId === 'psu') {
+      setShowPSUFullscreen(true);
+      return;
+    }
+    
     if (currentStep < steps.length) {
       const expectedComponent = components[currentStep];
       
@@ -132,7 +105,7 @@ export default function PCLabScreen({ navigation }) {
     return selectedComponents.includes(componentId);
   };
 
-  if (selectedModule === 'assembly') {
+  if (showMotherboardFullscreen) {
     return (
       <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
         {/* Header */}
@@ -343,32 +316,48 @@ export default function PCLabScreen({ navigation }) {
               </View>
             </View>
           </TouchableOpacity>
-        ))}
+        </View>
+        <View style={styles.realARContainer}>
+          <RealAR />
+        </View>
       </View>
 
-      {/* Special Highlight */}
-      <LinearGradient
-        colors={['#10B981', '#3B82F6', '#8B5CF6']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.specialHighlight}
-      >
-        <View style={styles.highlightIcon}>
-          <Ionicons name="construct" size={32} color="#fff" />
+      {/* Components Section */}
+      <View style={styles.componentsSection}>
+        <Text style={styles.sectionTitle}>Available Components</Text>
+        <View style={styles.componentsGrid}>
+          {components.map((component) => (
+            <TouchableOpacity
+              key={component.id}
+              style={[
+                styles.componentCard,
+                getComponentStatus(component.id) && styles.componentUsed
+              ]}
+              onPress={() => handleComponentPress(component.id)}
+              disabled={getComponentStatus(component.id)}
+            >
+              <Ionicons 
+                name={component.icon} 
+                size={32} 
+                color={getComponentStatus(component.id) ? '#9CA3AF' : '#3B82F6'} 
+              />
+              <Text 
+                style={[
+                  styles.componentName,
+                  getComponentStatus(component.id) && styles.componentUsedText
+                ]}
+              >
+                {component.name}
+              </Text>
+              {getComponentStatus(component.id) && (
+                <View style={styles.installedBadge}>
+                  <Ionicons name="checkmark" size={16} color="#fff" />
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
         </View>
-        <Text style={styles.highlightTitle}>🚀 NEW: Full Drag & Drop PC Assembly!</Text>
-        <Text style={styles.highlightSubtitle}>
-          Experience the most realistic PC building simulator with true drag-and-drop interaction. 
-          Grab components and place them exactly where they belong in the PC case!
-        </Text>
-        <TouchableOpacity 
-          style={styles.highlightButton}
-          onPress={() => handleModulePress('assembly')}
-        >
-          <Ionicons name="play-circle" size={20} color="#10B981" />
-          <Text style={styles.highlightButtonText}>Try Interactive Assembly Now</Text>
-        </TouchableOpacity>
-      </LinearGradient>
+      </View>
     </ScrollView>
   );
 }
@@ -381,7 +370,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingTop: 40,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
     backgroundColor: 'rgba(255,255,255,0.9)',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
@@ -414,201 +405,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1F2937',
   },
-  heroSection: {
-    padding: 24,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    marginBottom: 16,
-  },
-  heroTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  heroSubtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  modulesContainer: {
-    padding: 16,
-  },
-  moduleCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    position: 'relative',
-  },
-  featuredModule: {
-    borderWidth: 2,
-    borderColor: '#10B981',
-  },
-  featuredBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  featuredText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  moduleHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  moduleIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  moduleInfo: {
-    flex: 1,
-  },
-  moduleTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  moduleDescription: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
-  },
-  moduleStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statText: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginLeft: 4,
-  },
-  progressContainer: {
-    marginTop: 8,
-  },
-  progressInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  progressLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  progressPercent: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  progressBarContainer: {
-    height: 6,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 3,
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  specialHighlight: {
-    margin: 16,
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  highlightIcon: {
-    width: 64,
-    height: 64,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  highlightTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  highlightSubtitle: {
-    fontSize: 14,
-    color: '#E5E7EB',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-  highlightButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  highlightButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#10B981',
-    marginLeft: 8,
-  },
-  // Assembly mode styles
-  progressSection: {
-    backgroundColor: '#fff',
-    padding: 20,
-    marginBottom: 16,
-  },
-  progressTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 12,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    marginBottom: 8,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#10B981',
-    borderRadius: 4,
-  },
-  progressText: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  currentStep: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#10B981',
-  },
+
   pcCaseSection: {
     margin: 16,
   },
@@ -617,49 +414,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1F2937',
     marginBottom: 12,
-  },
-  pcCase: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  pcCaseTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 16,
   },
-  installedComponents: {
-    gap: 8,
-  },
-  componentSlot: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
+
+  realARContainer: {
+    height: 300,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F0F9FF',
     borderWidth: 2,
-    borderColor: '#E5E7EB',
+    borderColor: '#3B82F6',
   },
-  componentInstalled: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#10B981',
-  },
-  componentSlotText: {
-    marginLeft: 12,
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  componentInstalledText: {
-    color: '#10B981',
-    fontWeight: '600',
-  },
+
   componentsSection: {
     margin: 16,
   },
@@ -669,18 +435,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   componentCard: {
-    width: (width - 48) / 2,
+    width: (width - 56) / 2,
     backgroundColor: '#fff',
-    padding: 16,
+    padding: 12,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    marginHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
     position: 'relative',
+    minHeight: 100,
   },
   componentUsed: {
     backgroundColor: '#F9FAFB',
@@ -707,22 +475,82 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionSection: {
-    margin: 16,
-    marginBottom: 32,
+  // Fullscreen Styles
+  fullscreenContainer: {
+    flex: 1,
+    backgroundColor: '#000',
   },
-  resetButton: {
+  fullscreenBackButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    padding: 10,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  fullscreenButton: {
+    padding: 8,
+    backgroundColor: '#F0F9FF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  // Instructions Popup Styles
+  instructionsPopup: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  popupContent: {
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  popupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  popupTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  popupCloseButton: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 15,
+    padding: 3,
+    marginLeft:12
+  },
+  popupInstruction: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#EF4444',
-    padding: 16,
-    borderRadius: 12,
+    marginBottom: 16,
   },
-  resetButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+  popupText: {
+    fontSize: 14,
+    color: '#E5E7EB',
+    marginLeft: 12,
+    flex: 1,
+  },
+  fullscreen3D: {
+    flex: 1,
   },
 });

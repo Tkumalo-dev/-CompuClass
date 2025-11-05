@@ -389,7 +389,9 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     backgroundColor: '#fff',
-    padding: 24,
+    paddingTop: 40,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
     alignItems: 'center',
     marginBottom: 16,
   },
@@ -474,12 +476,6 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     marginBottom: 32,
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    marginBottom: 4,
   },
   footerVersion: {
     fontSize: 12,
