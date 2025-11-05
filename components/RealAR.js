@@ -1,11 +1,12 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, StyleSheet, Text, PanResponder } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RealAR() {
   const [loading, setLoading] = useState(true);
@@ -19,20 +20,16 @@ export default function RealAR() {
   const onContextCreate = async (gl) => {
     const { drawingBufferWidth: width, drawingBufferHeight: height } = gl;
     
-    // Create renderer
     const renderer = new Renderer({ gl });
     renderer.setSize(width, height);
     renderer.setClearColor(0xffffff, 1);
 
-    // Create camera
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
     camera.position.set(0, 0, cameraDistance);
     cameraRef.current = camera;
 
-    // Create scene
     const scene = new THREE.Scene();
 
-    // Add lighting
     const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
     scene.add(ambientLight);
 
@@ -41,81 +38,46 @@ export default function RealAR() {
     scene.add(directionalLight);
 
     try {
-      // Load GLTF model from app assets
-      const asset = Asset.fromModule(require('../assets/models/pc-model.gltf'));
-      await asset.downloadAsync();
-      const glbUrl = asset.localUri;
-      
       const loader = new GLTFLoader();
+      const githubUrl = 'https://raw.githubusercontent.com/kbamb/CompuClassv3/thabo-and-kamo/ARfeature/assets/models/personal_computer.glb';
       
-      // Suppress texture loading errors
-      const originalConsoleError = console.error;
-      console.error = (...args) => {
-        const message = args.join(' ');
-        if (!message.includes('GLTFLoader') && !message.includes('texture')) {
-          originalConsoleError(...args);
-        }
-      };
-
+      // Check cache first
+      const fileUri = FileSystem.documentDirectory + 'personal_computer.glb';
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      
+      let modelUrl = fileUri;
+      if (!fileInfo.exists) {
+        // Download and cache
+        await FileSystem.downloadAsync(githubUrl, fileUri);
+        await AsyncStorage.setItem('model_cached', 'true');
+      }
+      
       const model = await new Promise((resolve, reject) => {
         loader.load(
-          glbUrl,
-          (gltf) => {
-            // Restore console.error
-            console.error = originalConsoleError;
-            
-            // Remove textures to avoid loading errors
-            gltf.scene.traverse((child) => {
-              if (child.isMesh && child.material) {
-                if (Array.isArray(child.material)) {
-                  child.material.forEach(mat => {
-                    mat.map = null;
-                    mat.normalMap = null;
-                    mat.roughnessMap = null;
-                    mat.metalnessMap = null;
-                  });
-                } else {
-                  child.material.map = null;
-                  child.material.normalMap = null;
-                  child.material.roughnessMap = null;
-                  child.material.metalnessMap = null;
-                }
-              }
-            });
-            resolve(gltf);
-          },
+          modelUrl,
+          (gltf) => resolve(gltf),
           undefined,
-          (error) => {
-            // Restore console.error
-            console.error = originalConsoleError;
-            reject(error);
-          }
+          (error) => reject(error)
         );
       });
       
-      // Scale and position the model (much larger)
-      model.scene.scale.setScalar(2.0);
+      model.scene.scale.setScalar(1.0);
       model.scene.position.set(0, -0.5, 0);
       modelRef.current = model.scene;
       
       scene.add(model.scene);
-      console.log('GLB model loaded successfully (textures disabled)');
       setLoading(false);
 
-      // Animation loop
       const animate = () => {
         requestAnimationFrame(animate);
         
-        // Apply rotations
         if (modelRef.current) {
           modelRef.current.rotation.x = rotationXRef.current;
           modelRef.current.rotation.y = rotationYRef.current + autoRotationRef.current;
         }
         
-        // Update auto rotation
         autoRotationRef.current += 0.01;
         
-        // Update camera distance
         if (cameraRef.current) {
           cameraRef.current.position.z = cameraDistance;
         }
@@ -128,8 +90,9 @@ export default function RealAR() {
       
     } catch (error) {
       console.error('Failed to load GLB model:', error);
+      console.error('Error details:', error.message);
+      console.error('Asset URI:', asset?.localUri);
       
-      // Fallback: Create simple geometry
       const geometry = new THREE.BoxGeometry(2, 2, 2);
       const material = new THREE.MeshPhongMaterial({ color: 0x3B82F6 });
       const cube = new THREE.Mesh(geometry, material);
