@@ -5,8 +5,6 @@ import { Renderer } from 'expo-three';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Asset } from 'expo-asset';
-import * as FileSystem from 'expo-file-system';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RealAR() {
   const [loading, setLoading] = useState(true);
@@ -39,29 +37,18 @@ export default function RealAR() {
 
     try {
       const loader = new GLTFLoader();
-      const githubUrl = 'https://raw.githubusercontent.com/kbamb/CompuClassv3/thabo-and-kamo/ARfeature/assets/models/personal_computer.glb';
-      
-      // Check cache first
-      const fileUri = FileSystem.documentDirectory + 'personal_computer.glb';
-      const fileInfo = await FileSystem.getInfoAsync(fileUri);
-      
-      let modelUrl = fileUri;
-      if (!fileInfo.exists) {
-        // Download and cache
-        await FileSystem.downloadAsync(githubUrl, fileUri);
-        await AsyncStorage.setItem('model_cached', 'true');
-      }
+      const githubUrl = 'https://raw.githubusercontent.com/Tkumalo-dev/-CompuClass/thabo-and-kamo/ARfeature/assets/models/personal_computer.glb';
       
       const model = await new Promise((resolve, reject) => {
         loader.load(
-          modelUrl,
+          githubUrl,
           (gltf) => resolve(gltf),
           undefined,
           (error) => reject(error)
         );
       });
       
-      model.scene.scale.setScalar(1.0);
+      model.scene.scale.setScalar(3.0);
       model.scene.position.set(0, -0.5, 0);
       modelRef.current = model.scene;
       
