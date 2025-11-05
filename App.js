@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, TouchableOpacity, PanResponder, Animated, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, PanResponder, Animated, Dimensions, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -20,12 +20,20 @@ import SignUpScreen from './screens/SignUpScreen';
 import Windows11SimulatorScreen from './screens/Windows11SimulatorScreen';
 import LecturerDashboardScreen from './screens/LecturerDashboardScreen';
 import FolderContentScreen from './screens/FolderContentScreen';
+import StudentProgressScreen from './screens/StudentProgressScreen';
+import ClassManagementScreen from './screens/ClassManagementScreen';
+import ClassDetailScreen from './screens/ClassDetailScreen';
+import ContentUploadScreen from './screens/ContentUploadScreen';
+import QuizCreationScreen from './screens/QuizCreationScreen';
+import QuizDetailScreen from './screens/QuizDetailScreen';
 import StudentMaterialsScreen from './screens/StudentMaterialsScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import Sidebar from './components/Sidebar';
 import { authService } from './services/authService';
 import { supabase } from './config/supabase';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { offlineService } from './services/offlineService';
+import { useOffline } from './hooks/useOffline';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -35,10 +43,69 @@ function LecturerStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="LecturerDashboard" component={LecturerDashboardScreen} />
       <Stack.Screen name="FolderContent" component={FolderContentScreen} />
+      <Stack.Screen name="StudentProgress" component={StudentProgressScreen} />
+      <Stack.Screen name="ClassManagement" component={ClassManagementScreen} />
+      <Stack.Screen name="ContentUpload" component={ContentUploadScreen} />
+      <Stack.Screen name="QuizCreation" component={QuizCreationScreen} />
+      <Stack.Screen name="QuizDetail" component={QuizDetailScreen} />
+      <Stack.Screen name="ClassDetail" component={ClassDetailScreen} />
     </Stack.Navigator>
   );
 }
 const { width } = Dimensions.get('window');
+
+function CustomTabBar({ state, descriptors, navigation }) {
+  const { theme } = useTheme();
+  const visibleTabs = ['Dashboard', 'Lecturer', 'Search', 'Profile'];
+  
+  return (
+    <View style={[styles.tabBar, { backgroundColor: theme.card, borderTopColor: theme.border }]}>
+      {state.routes.filter(route => visibleTabs.includes(route.name)).map((route, index) => {
+        const { options } = descriptors[route.key];
+        const label = options.tabBarLabel || route.name;
+        const isFocused = state.index === state.routes.indexOf(route);
+
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+
+        let iconName;
+        if (route.name === 'Dashboard' || route.name === 'Lecturer') {
+          iconName = isFocused ? 'home' : 'home-outline';
+        } else if (route.name === 'Search') {
+          iconName = isFocused ? 'search' : 'search-outline';
+        } else if (route.name === 'Profile') {
+          iconName = isFocused ? 'person' : 'person-outline';
+        }
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            onPress={onPress}
+            style={styles.tabItem}
+          >
+            <Ionicons
+              name={iconName}
+              size={28}
+              color={isFocused ? theme.primary : theme.textTertiary}
+            />
+            <Text style={[styles.tabLabel, { color: isFocused ? theme.primary : theme.textTertiary }]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
 
 function CustomHeader({ title, showBadge = false, onMenuPress }) {
   const { theme } = useTheme();
@@ -95,6 +162,7 @@ function CustomHeader({ title, showBadge = false, onMenuPress }) {
 
 function AppContent() {
   const { theme } = useTheme();
+  const { isOnline } = useOffline();
   const [isFirstLaunch, setIsFirstLaunch] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
@@ -229,51 +297,8 @@ function AppContent() {
           <NavigationContainer ref={navigationRef}>
           <StatusBar style="dark" backgroundColor="#F0FDF4" />
         <Tab.Navigator
+          tabBar={props => <CustomTabBar {...props} />}
           screenOptions={({ route }) => ({
-            tabBarIcon: ({ focused, color, size }) => {
-              let iconName;
-
-              if (route.name === 'Dashboard') {
-                iconName = focused ? 'home' : 'home-outline';
-              } else if (route.name === 'Lecturer') {
-                iconName = focused ? 'briefcase' : 'briefcase-outline';
-              } else if (route.name === 'Search') {
-                iconName = focused ? 'search' : 'search-outline';
-              } else if (route.name === 'Profile') {
-                iconName = focused ? 'person' : 'person-outline';
-              } else if (route.name === 'PC Lab') {
-                iconName = focused ? 'desktop' : 'desktop-outline';
-              } else if (route.name === 'Windows 11') {
-                iconName = focused ? 'laptop' : 'laptop-outline';
-              } else if (route.name === 'Quiz') {
-                iconName = focused ? 'help-circle' : 'help-circle-outline';
-              } else if (route.name === 'Troubleshoot') {
-                iconName = focused ? 'bug' : 'bug-outline';
-              }
-
-              return <Ionicons name={iconName} size={size} color={color} />;
-            },
-            tabBarActiveTintColor: theme.primary,
-            tabBarInactiveTintColor: theme.textSecondary,
-            tabBarStyle: {
-              backgroundColor: theme.card,
-              borderTopColor: theme.border,
-              paddingBottom: 8,
-              paddingTop: 8,
-              height: 70,
-            },
-            tabBarItemStyle: {
-              justifyContent: 'center',
-              alignItems: 'center',
-            },
-            tabBarLabelStyle: {
-              fontSize: 12,
-              fontWeight: '600',
-            },
-            tabBarContentContainerStyle: {
-              justifyContent: 'space-around',
-              width: '100%',
-            },
             header: ({ route }) => (
               <CustomHeader 
                 title={route.name} 
@@ -331,11 +356,12 @@ function AppContent() {
           <Tab.Screen 
             name="Windows 11" 
             component={Windows11SimulatorScreen}
-            options={{ 
+            options={({ route }) => ({ 
               title: 'Windows 11',
               tabBarButton: () => null,
-              headerShown: false
-            }}
+              headerShown: false,
+              tabBarStyle: { display: 'none' }
+            })}
           />
           <Tab.Screen 
             name="Quiz" 
@@ -382,6 +408,34 @@ function AppContent() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    flexDirection: 'row',
+    height: 80,
+    borderTopWidth: 1,
+    paddingBottom: 15,
+    paddingTop: 15,
+    paddingHorizontal: 20,
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    width: '100%',
+    zIndex: 1,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  tabLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 6,
+  },
+});
 
 export default function App() {
   return (

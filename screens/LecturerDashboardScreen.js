@@ -72,12 +72,67 @@ export default function LecturerDashboardScreen({ navigation }) {
       </LinearGradient>
 
       <ScrollView style={styles.content}>
-        <TouchableOpacity style={styles.createButton} onPress={() => setShowCreateFolder(true)}>
-          <LinearGradient colors={theme.primaryGradient} style={styles.createButtonGradient}>
-            <Ionicons name="add-circle" size={24} color="#fff" />
-            <Text style={styles.createButtonText}>Create New Folder</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+        <View style={styles.quickActions}>
+          <TouchableOpacity style={styles.createButton} onPress={() => setShowCreateFolder(true)}>
+            <LinearGradient colors={theme.primaryGradient} style={styles.createButtonGradient}>
+              <Ionicons name="add-circle" size={24} color="#fff" />
+              <Text style={styles.createButtonText}>Create New Folder</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: theme.card }]} 
+            onPress={() => navigation.navigate('StudentProgress')}
+          >
+            <Ionicons name="people" size={24} color={theme.primary} />
+            <Text style={[styles.actionButtonText, { color: theme.text }]}>Student Progress</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: theme.card }]} 
+            onPress={() => navigation.navigate('ClassManagement')}
+          >
+            <Ionicons name="school" size={24} color={theme.primary} />
+            <Text style={[styles.actionButtonText, { color: theme.text }]}>Class Management</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: theme.card }]} 
+            onPress={async () => {
+              // Get or create default folder
+              const folders = await lecturerService.getFolders();
+              let folderId = folders[0]?.id;
+              
+              if (!folderId) {
+                const newFolder = await lecturerService.createFolder('General', 'General documents');
+                folderId = newFolder.id;
+              }
+              
+              navigation.navigate('ContentUpload', { folderId });
+            }}
+          >
+            <Ionicons name="cloud-upload" size={24} color={theme.primary} />
+            <Text style={[styles.actionButtonText, { color: theme.text }]}>Upload Content</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: theme.card }]} 
+            onPress={async () => {
+              const folders = await lecturerService.getFolders();
+              let folderId = folders[0]?.id;
+              
+              if (!folderId) {
+                const newFolder = await lecturerService.createFolder('General', 'General quizzes');
+                folderId = newFolder.id;
+              }
+              
+              navigation.navigate('QuizCreation', { folderId });
+            }}
+          >
+            <Ionicons name="help-circle" size={24} color={theme.primary} />
+            <Text style={[styles.actionButtonText, { color: theme.text }]}>Create Quiz</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.foldersContainer}>
           {folders.map((folder) => (
@@ -143,7 +198,25 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#1F2937' },
   headerSubtitle: { fontSize: 14, color: '#6B7280', marginTop: 4 },
   content: { flex: 1, padding: 16 },
-  createButton: { marginBottom: 20 },
+  quickActions: { marginBottom: 20, gap: 12 },
+  createButton: {},
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
   createButtonGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 12 },
   createButtonText: { color: '#fff', fontSize: 16, fontWeight: '600', marginLeft: 8 },
   foldersContainer: { gap: 12 },

@@ -10,6 +10,7 @@ import {
   Modal,
   TextInput,
   Linking,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -325,7 +326,7 @@ export default function SettingsScreen({ navigation }) {
     <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
       <View style={[styles.profileSection, { backgroundColor: theme.card }]}>
         {user?.user_metadata?.avatar_url ? (
-          <img src={user.user_metadata.avatar_url} style={styles.avatarImage} />
+          <Image source={{ uri: user.user_metadata.avatar_url }} style={styles.avatarImage} />
         ) : (
           <View style={[styles.profileAvatar, { backgroundColor: theme.primary }]}>
             <Ionicons name="person" size={40} color="#fff" />

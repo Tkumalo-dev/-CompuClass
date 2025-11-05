@@ -8,6 +8,7 @@ import {
   Alert,
   Modal,
   TextInput,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../services/authService';
@@ -97,14 +98,26 @@ export default function ProfileScreen({ onLogout }) {
     }
   };
   const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      try {
-        await authService.signOut();
-        onLogout();
-      } catch (error) {
-        console.error('Logout error:', error);
-      }
-    }
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await authService.signOut();
+              onLogout();
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const profileOptions = [
@@ -118,7 +131,7 @@ export default function ProfileScreen({ onLogout }) {
     <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
       <View style={[styles.profileSection, { backgroundColor: theme.card }]}>
         {user?.user_metadata?.avatar_url ? (
-          <img src={user.user_metadata.avatar_url} style={styles.avatarImage} />
+          <Image source={{ uri: user.user_metadata.avatar_url }} style={styles.avatarImage} />
         ) : (
           <View style={[styles.profileAvatar, { backgroundColor: theme.primary }]}>
             <Ionicons name="person" size={40} color="#fff" />

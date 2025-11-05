@@ -71,7 +71,7 @@ export default function Sidebar({ visible, onClose, onNavigate, translateX: exte
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <View style={[styles.overlay, { backgroundColor: theme.overlay }]}>}
+      <View style={[styles.overlay, { backgroundColor: theme.overlay }]}>
         <TouchableOpacity 
           style={StyleSheet.absoluteFill} 
           activeOpacity={1} 

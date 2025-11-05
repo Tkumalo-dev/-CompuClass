@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { downloadAsync, documentDirectory } from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { supabase } from '../config/supabase';
 import { useTheme } from '../context/ThemeContext';
 
@@ -49,16 +51,28 @@ export default function StudentMaterialsScreen({ navigation }) {
 
   const openDocument = async (doc) => {
     try {
-      const response = await fetch(doc.file_url);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = doc.file_name || doc.title;
-      link.click();
-      URL.revokeObjectURL(url);
+      if (!doc.file_url) {
+        Alert.alert('Error', 'No file URL available');
+        return;
+      }
+
+      const fileName = doc.file_name || `${doc.title}.pdf`;
+      const fileUri = `${documentDirectory}${fileName}`;
+      
+      const downloadResult = await downloadAsync(doc.file_url, fileUri);
+      
+      if (downloadResult.status === 200) {
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(downloadResult.uri);
+        } else {
+          Alert.alert('Success', 'File downloaded');
+        }
+      } else {
+        Alert.alert('Error', 'Download failed');
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to open document');
+      Alert.alert('Error', error.message || 'Failed to download document');
+      console.error('Download error:', error);
     }
   };
 

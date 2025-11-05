@@ -7,14 +7,19 @@ import {
   Text,
   Alert,
   Platform,
+  StatusBar,
 } from 'react-native';
+import Modal from 'react-native-modal';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../config/supabase';
 import { authService } from '../services/authService';
+import { useNavigation } from '@react-navigation/native';
 
 export default function Windows11SimulatorScreen() {
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [sessionId, setSessionId] = useState(null);
   const [sessionStart, setSessionStart] = useState(null);
@@ -25,6 +30,7 @@ export default function Windows11SimulatorScreen() {
     startSession();
     return () => {
       endSession();
+      ScreenOrientation.unlockAsync();
     };
   }, []);
 
@@ -82,8 +88,24 @@ export default function Windows11SimulatorScreen() {
     setLoadTimeout(timeout);
   };
 
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
+  const toggleFullscreen = async () => {
+    if (!isFullscreen) {
+      setIsFullscreen(true);
+      setTimeout(async () => {
+        try {
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+        } catch (error) {
+          console.log('Orientation lock error:', error);
+        }
+      }, 100);
+    } else {
+      try {
+        await ScreenOrientation.unlockAsync();
+      } catch (error) {
+        console.log('Orientation unlock error:', error);
+      }
+      setIsFullscreen(false);
+    }
   };
 
   if (Platform.OS === 'web') {
@@ -145,66 +167,61 @@ export default function Windows11SimulatorScreen() {
     );
   }
 
-  if (Platform.OS === 'ios') {
-    return (
-      <View style={styles.container}>
-        <LinearGradient
-          colors={['#0F172A', '#1E293B']}
-          style={styles.header}
-        >
-          <View style={styles.headerContent}>
-            <View style={styles.titleContainer}>
-              <Ionicons name="desktop" size={24} color="#10B981" />
-              <Text style={styles.headerTitle}>Windows 11 Simulator</Text>
-            </View>
-          </View>
-          <Text style={styles.headerSubtitle}>Practice Windows 11 in a safe environment</Text>
-        </LinearGradient>
 
-        <View style={styles.messageContainer}>
-          <Ionicons name="information-circle" size={64} color="#10B981" />
-          <Text style={styles.messageTitle}>iOS Not Supported</Text>
-          <Text style={styles.messageText}>
-            The Windows 11 simulator is not available on iOS due to security restrictions.
-            Please use an Android device or web browser to access this feature.
-          </Text>
-        </View>
-      </View>
-    );
-  }
 
   return (
-    <View style={styles.container}>
-      {!isFullscreen && (
-        <LinearGradient
-          colors={['#0F172A', '#1E293B']}
-          style={styles.header}
-        >
-          <View style={styles.headerContent}>
-            <View style={styles.titleContainer}>
-              <Ionicons name="desktop" size={24} color="#10B981" />
-              <Text style={styles.headerTitle}>Windows 11 Simulator</Text>
-            </View>
-            <View style={styles.headerButtons}>
-              <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
-                <Ionicons name="refresh" size={20} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={toggleFullscreen} style={styles.refreshButton}>
-                <Ionicons name="expand" size={20} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <Text style={styles.headerSubtitle}>Practice Windows 11 in a safe environment</Text>
-        </LinearGradient>
-      )}
-
-      <View style={[styles.webviewContainer, isFullscreen && styles.fullscreenContainer]}>
-        {isFullscreen && (
+    <>
+      <Modal 
+        isVisible={isFullscreen} 
+        onBackdropPress={toggleFullscreen}
+        onBackButtonPress={toggleFullscreen}
+        style={{ margin: 0 }}
+        animationIn="fadeIn"
+        animationOut="fadeOut"
+      >
+        <View style={styles.fullscreenContainer}>
+          <StatusBar hidden />
           <TouchableOpacity onPress={toggleFullscreen} style={styles.exitFullscreenButton}>
-            <Ionicons name="contract" size={20} color="#fff" />
-            <Text style={styles.exitFullscreenText}>Exit Fullscreen</Text>
+            <Ionicons name="close" size={24} color="#fff" />
           </TouchableOpacity>
-        )}
+          <WebView
+            source={{ uri: 'https://win11.blueedge.me/' }}
+            style={styles.webview}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            scalesPageToFit={true}
+            scrollEnabled={true}
+            bounces={true}
+            showsVerticalScrollIndicator={true}
+            showsHorizontalScrollIndicator={true}
+            contentMode="mobile"
+          />
+        </View>
+      </Modal>
+      <View style={styles.container}>
+      <StatusBar hidden={false} />
+      <LinearGradient
+        colors={['#0F172A', '#1E293B']}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <View style={styles.titleContainer}>
+            <Ionicons name="desktop" size={24} color="#10B981" />
+            <Text style={styles.headerTitle}>Windows 11 Simulator</Text>
+          </View>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
+              <Ionicons name="refresh" size={20} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={toggleFullscreen} style={styles.refreshButton}>
+              <Ionicons name="expand" size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <Text style={styles.headerSubtitle}>Practice Windows 11 in a safe environment</Text>
+      </LinearGradient>
+
+      <View style={styles.webviewContainer}>
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#10B981" />
@@ -227,20 +244,22 @@ export default function Windows11SimulatorScreen() {
           domStorageEnabled={true}
           allowsFullscreenVideo={true}
           mediaPlaybackRequiresUserAction={false}
+          scalesPageToFit={true}
+          bounces={false}
+          scrollEnabled={true}
         />
       </View>
 
-      {!isFullscreen && (
-        <View style={styles.footer}>
-          <View style={styles.infoCard}>
-            <Ionicons name="information-circle" size={16} color="#10B981" />
-            <Text style={styles.infoText}>
-              This is a full Windows 11 simulation. Explore and learn!
-            </Text>
-          </View>
+      <View style={styles.footer}>
+        <View style={styles.infoCard}>
+          <Ionicons name="information-circle" size={16} color="#10B981" />
+          <Text style={styles.infoText}>
+            This is a full Windows 11 simulation. Explore and learn!
+          </Text>
         </View>
-      )}
-    </View>
+      </View>
+      </View>
+    </>
   );
 }
 
@@ -288,23 +307,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   fullscreenContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 999,
+    flex: 1,
+    backgroundColor: '#000',
   },
   exitFullscreenButton: {
     position: 'absolute',
-    top: 16,
-    right: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+    top: 40,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1000,
   },
   exitFullscreenText: {
@@ -316,6 +331,7 @@ const styles = StyleSheet.create({
   webviewContainer: {
     flex: 1,
     backgroundColor: '#000',
+    zIndex: 1,
   },
   webview: {
     flex: 1,
