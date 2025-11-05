@@ -6,15 +6,15 @@ import { Renderer } from 'expo-three';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Asset } from 'expo-asset';
-import * as FileSystem from 'expo-file-system';
 
 export default function RealAR() {
   const [loading, setLoading] = useState(true);
   const [cameraDistance, setCameraDistance] = useState(5);
-  const [rotationX, setRotationX] = useState(0);
-  const [rotationY, setRotationY] = useState(0);
   const cameraRef = useRef(null);
   const modelRef = useRef(null);
+  const rotationXRef = useRef(0);
+  const rotationYRef = useRef(0);
+  const autoRotationRef = useRef(0);
 
   const onContextCreate = async (gl) => {
     const { drawingBufferWidth: width, drawingBufferHeight: height } = gl;
@@ -41,9 +41,12 @@ export default function RealAR() {
     scene.add(directionalLight);
 
     try {
-      // Load your personal computer GLB model
+      // Load GLTF model from app assets
+      const asset = Asset.fromModule(require('../assets/models/pc-model.gltf'));
+      await asset.downloadAsync();
+      const glbUrl = asset.localUri;
+      
       const loader = new GLTFLoader();
-      const glbUrl = 'https://drive.google.com/uc?export=download&id=1iIlf5QJNhljHqSUNFXvGPvwSzKa_7ryd';
       
       // Suppress texture loading errors
       const originalConsoleError = console.error;
@@ -103,11 +106,14 @@ export default function RealAR() {
       const animate = () => {
         requestAnimationFrame(animate);
         
-        // Apply user rotations
+        // Apply rotations
         if (modelRef.current) {
-          modelRef.current.rotation.x = rotationX;
-          modelRef.current.rotation.y = rotationY + Date.now() * 0.001;
+          modelRef.current.rotation.x = rotationXRef.current;
+          modelRef.current.rotation.y = rotationYRef.current + autoRotationRef.current;
         }
+        
+        // Update auto rotation
+        autoRotationRef.current += 0.01;
         
         // Update camera distance
         if (cameraRef.current) {
@@ -146,8 +152,8 @@ export default function RealAR() {
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: () => true,
     onPanResponderMove: (evt, gestureState) => {
-      setRotationY(rotationY + gestureState.dx * 0.01);
-      setRotationX(Math.max(-Math.PI/2, Math.min(Math.PI/2, rotationX - gestureState.dy * 0.01)));
+      rotationYRef.current += gestureState.dx * 0.01;
+      rotationXRef.current = Math.max(-Math.PI/2, Math.min(Math.PI/2, rotationXRef.current - gestureState.dy * 0.01));
     },
   });
 
@@ -190,5 +196,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-
 });

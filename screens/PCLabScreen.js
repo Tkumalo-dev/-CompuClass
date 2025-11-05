@@ -11,6 +11,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Camera } from 'expo-camera';
 import RealAR from '../components/RealAR';
+import RamAR from '../components/RamAR';
+import MotherboardAR from '../components/MotherboardAR';
+import StorageAR from '../components/StorageAR';
+import CPUAR from '../components/CPUAR';
+import GPUAR from '../components/GPUAR';
+import PSUAR from '../components/PSUAR';
 
 
 const { width, height } = Dimensions.get('window');
@@ -112,9 +118,7 @@ export default function PCLabScreen({ navigation }) {
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <View style={styles.fullscreen3D}>
-          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>Motherboard Component</Text>
-        </View>
+        <MotherboardAR />
       </View>
     );
   }
@@ -128,9 +132,7 @@ export default function PCLabScreen({ navigation }) {
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <View style={styles.fullscreen3D}>
-          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>CPU Component</Text>
-        </View>
+        <CPUAR />
       </View>
     );
   }
@@ -144,9 +146,7 @@ export default function PCLabScreen({ navigation }) {
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <View style={styles.fullscreen3D}>
-          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>RAM Component</Text>
-        </View>
+        <RamAR />
       </View>
     );
   }
@@ -160,9 +160,7 @@ export default function PCLabScreen({ navigation }) {
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <View style={styles.fullscreen3D}>
-          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>GPU Component</Text>
-        </View>
+        <GPUAR />
       </View>
     );
   }
@@ -176,9 +174,7 @@ export default function PCLabScreen({ navigation }) {
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <View style={styles.fullscreen3D}>
-          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>Storage Component</Text>
-        </View>
+        <StorageAR />
       </View>
     );
   }
@@ -192,9 +188,7 @@ export default function PCLabScreen({ navigation }) {
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <View style={styles.fullscreen3D}>
-          <Text style={{color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 18}}>PSU Component</Text>
-        </View>
+        <PSUAR />
       </View>
     );
   }
@@ -428,12 +422,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  component3D: {
-    width: 60,
-    height: 40,
-    borderRadius: 4,
-  },
-
   // Fullscreen Styles
   fullscreenContainer: {
     flex: 1,
@@ -511,10 +499,5 @@ const styles = StyleSheet.create({
   },
   fullscreen3D: {
     flex: 1,
-  },
-  component3D: {
-    width: 60,
-    height: 40,
-    borderRadius: 4,
   },
 });
