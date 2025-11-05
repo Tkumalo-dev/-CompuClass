@@ -9,9 +9,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../context/ThemeContext';
 
 
 export default function QuizScreen() {
+  const { theme } = useTheme();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [score, setScore] = useState(0);
@@ -72,7 +74,7 @@ export default function QuizScreen() {
 
   if (quizCompleted) {
     return (
-      <ScrollView style={styles.container}>
+      <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
         <LinearGradient
           colors={[getScoreColor(), '#1F2937']}
           style={styles.resultContainer}
@@ -92,11 +94,11 @@ export default function QuizScreen() {
           </TouchableOpacity>
         </LinearGradient>
 
-        <View style={styles.reviewContainer}>
-          <Text style={styles.reviewTitle}>Review Your Answers</Text>
+        <View style={[styles.reviewContainer, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.reviewTitle, { color: theme.text }]}>Review Your Answers</Text>
           {quizQuestions.map((question, index) => (
-            <View key={question.id} style={styles.reviewItem}>
-              <Text style={styles.reviewQuestion}>
+            <View key={question.id} style={[styles.reviewItem, { backgroundColor: theme.card }]}>
+              <Text style={[styles.reviewQuestion, { color: theme.text }]}>
                 {index + 1}. {question.question}
               </Text>
               <Text style={[
@@ -111,7 +113,7 @@ export default function QuizScreen() {
                   Correct: {question.options[question.correct]}
                 </Text>
               )}
-              <Text style={styles.explanation}>{question.explanation}</Text>
+              <Text style={[styles.explanation, { color: theme.textSecondary }]}>{question.explanation}</Text>
             </View>
           ))}
         </View>
@@ -120,15 +122,15 @@ export default function QuizScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.questionCounter}>
+    <View style={[styles.container, { backgroundColor: theme.surface }]}>
+      <View style={[styles.header, { backgroundColor: theme.card }]}>
+        <Text style={[styles.questionCounter, { color: theme.text }]}>
           Question {currentQuestion + 1} of {quizQuestions.length}
         </Text>
-        <Text style={styles.scoreCounter}>Score: {score}</Text>
+        <Text style={[styles.scoreCounter, { color: theme.primary }]}>Score: {score}</Text>
       </View>
 
-      <View style={styles.progressBar}>
+      <View style={[styles.progressBar, { backgroundColor: theme.borderLight }]}>
         <View 
           style={[
             styles.progressFill, 
@@ -138,7 +140,7 @@ export default function QuizScreen() {
       </View>
 
       <ScrollView style={styles.questionContainer}>
-        <Text style={styles.questionText}>
+        <Text style={[styles.questionText, { color: theme.text }]}>
           {quizQuestions[currentQuestion].question}
         </Text>
 
@@ -148,7 +150,8 @@ export default function QuizScreen() {
               key={index}
               style={[
                 styles.optionButton,
-                selectedAnswer === index && styles.selectedOption,
+                { backgroundColor: theme.card, borderColor: theme.border },
+                selectedAnswer === index && { borderColor: '#3B82F6', backgroundColor: '#3B82F6' + '20' },
                 showResult && index === quizQuestions[currentQuestion].correct && styles.correctOption,
                 showResult && selectedAnswer === index && index !== quizQuestions[currentQuestion].correct && styles.wrongOption
               ]}
@@ -157,6 +160,7 @@ export default function QuizScreen() {
             >
               <Text style={[
                 styles.optionText,
+                { color: theme.text },
                 selectedAnswer === index && styles.selectedOptionText,
                 showResult && index === quizQuestions[currentQuestion].correct && styles.correctOptionText,
                 showResult && selectedAnswer === index && index !== quizQuestions[currentQuestion].correct && styles.wrongOptionText

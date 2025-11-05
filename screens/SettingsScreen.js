@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,29 +7,174 @@ import {
   StyleSheet,
   Switch,
   Alert,
+  Modal,
+  TextInput,
+  Linking,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authService } from '../services/authService';
+import { supabase } from '../config/supabase';
+import { useTheme } from '../context/ThemeContext';
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ navigation }) {
+  const { theme, isDark, toggleTheme } = useTheme();
+  const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(true);
   const [soundEffects, setSoundEffects] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const [autoDownload, setAutoDownload] = useState(false);
+  const [language, setLanguage] = useState('English');
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [cacheSize, setCacheSize] = useState('0 MB');
+
+  useEffect(() => {
+    loadSettings();
+    loadUser();
+    calculateCacheSize();
+  }, []);
+
+  const loadUser = async () => {
+    const currentUser = await authService.getCurrentUser();
+    setUser(currentUser);
+  };
+
+  const loadSettings = async () => {
+    try {
+      const settings = await AsyncStorage.multiGet([
+        'notifications',
+        'emailNotifications',
+        'soundEffects',
+        'autoDownload',
+        'language',
+      ]);
+      settings.forEach(([key, value]) => {
+        if (value !== null) {
+          const parsed = key === 'language' ? value : JSON.parse(value);
+          switch (key) {
+            case 'notifications': setNotifications(parsed); break;
+            case 'emailNotifications': setEmailNotifications(parsed); break;
+            case 'soundEffects': setSoundEffects(parsed); break;
+            case 'autoDownload': setAutoDownload(parsed); break;
+            case 'language': setLanguage(parsed); break;
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Load settings error:', error);
+    }
+  };
+
+  const saveSetting = async (key, value) => {
+    try {
+      await AsyncStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    } catch (error) {
+      console.error('Save setting error:', error);
+    }
+  };
+
+  const calculateCacheSize = async () => {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      let totalSize = 0;
+      for (const key of keys) {
+        const value = await AsyncStorage.getItem(key);
+        if (value) totalSize += value.length;
+      }
+      setCacheSize(`${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+    } catch (error) {
+      setCacheSize('0 MB');
+    }
+  };
+
+  const handleClearCache = async () => {
+    Alert.alert(
+      'Clear Cache',
+      'This will remove temporary files. Your account data will be preserved.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            const keysToKeep = ['user', 'loginTimestamp', 'notifications', 'soundEffects', 'darkMode', 'language'];
+            const allKeys = await AsyncStorage.getAllKeys();
+            const keysToRemove = allKeys.filter(key => !keysToKeep.includes(key));
+            await AsyncStorage.multiRemove(keysToRemove);
+            calculateCacheSize();
+            Alert.alert('Success', 'Cache cleared');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleExportData = async () => {
+    try {
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      const exportData = {
+        user: { email: user.email, name: user.user_metadata?.full_name },
+        profile,
+        exportDate: new Date().toISOString(),
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `compuclass_data_${Date.now()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      Alert.alert('Success', 'Data exported');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to export data');
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your account and all data. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await supabase.from('profiles').delete().eq('id', user.id);
+              await authService.signOut();
+              Alert.alert('Account Deleted', 'Your account has been deleted');
+            } catch (error) {
+              Alert.alert('Error', error.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const languages = ['English', 'Spanish', 'French', 'German', 'Arabic', 'Chinese'];
 
   const settingsOptions = [
     {
-      title: 'Profile',
+      title: 'Notifications',
       items: [
         {
-          icon: 'person',
-          title: 'Edit Profile',
-          subtitle: 'Update your personal information',
-          onPress: () => Alert.alert('Profile', 'Profile editing coming soon!'),
+          icon: 'notifications',
+          title: 'Push Notifications',
+          subtitle: 'Get app notifications',
+          hasSwitch: true,
+          value: notifications,
+          onToggle: (val) => { setNotifications(val); saveSetting('notifications', val); },
         },
         {
-          icon: 'trophy',
-          title: 'Achievements',
-          subtitle: 'View your learning milestones',
-          onPress: () => Alert.alert('Achievements', 'Achievements coming soon!'),
+          icon: 'mail',
+          title: 'Email Notifications',
+          subtitle: 'Receive updates via email',
+          hasSwitch: true,
+          value: emailNotifications,
+          onToggle: (val) => { setEmailNotifications(val); saveSetting('emailNotifications', val); },
         },
       ],
     },
@@ -37,54 +182,81 @@ export default function SettingsScreen() {
       title: 'Preferences',
       items: [
         {
-          icon: 'notifications',
-          title: 'Notifications',
-          subtitle: 'Get reminders and updates',
-          hasSwitch: true,
-          value: notifications,
-          onToggle: setNotifications,
-        },
-        {
           icon: 'volume-high',
           title: 'Sound Effects',
           subtitle: 'Enable audio feedback',
           hasSwitch: true,
           value: soundEffects,
-          onToggle: setSoundEffects,
+          onToggle: (val) => { setSoundEffects(val); saveSetting('soundEffects', val); },
         },
         {
           icon: 'moon',
           title: 'Dark Mode',
           subtitle: 'Switch to dark theme',
           hasSwitch: true,
-          value: darkMode,
-          onToggle: setDarkMode,
+          value: isDark,
+          onToggle: toggleTheme,
+        },
+        {
+          icon: 'download',
+          title: 'Auto-Download',
+          subtitle: 'Download content automatically',
+          hasSwitch: true,
+          value: autoDownload,
+          onToggle: (val) => { setAutoDownload(val); saveSetting('autoDownload', val); },
+        },
+        {
+          icon: 'language',
+          title: 'Language',
+          subtitle: language,
+          onPress: () => setShowLanguageModal(true),
         },
       ],
     },
     {
-      title: 'Learning',
+      title: 'Storage',
       items: [
         {
-          icon: 'refresh',
-          title: 'Reset Progress',
-          subtitle: 'Clear all learning data',
-          onPress: () => {
-            Alert.alert(
-              'Reset Progress',
-              'Are you sure you want to reset all your progress? This cannot be undone.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Reset', style: 'destructive', onPress: () => {} },
-              ]
-            );
-          },
+          icon: 'folder',
+          title: 'Cache Size',
+          subtitle: cacheSize,
+          onPress: () => {},
         },
         {
-          icon: 'download',
-          title: 'Download Content',
-          subtitle: 'Save lessons for offline use',
-          onPress: () => Alert.alert('Download', 'Offline content coming soon!'),
+          icon: 'trash',
+          title: 'Clear Cache',
+          subtitle: 'Free up storage space',
+          onPress: handleClearCache,
+        },
+      ],
+    },
+    {
+      title: 'Privacy & Security',
+      items: [
+        {
+          icon: 'shield-checkmark',
+          title: 'Privacy Policy',
+          subtitle: 'View our privacy policy',
+          onPress: () => Linking.openURL('https://compuclass.edu/privacy'),
+        },
+        {
+          icon: 'document-text',
+          title: 'Terms of Service',
+          subtitle: 'Read our terms',
+          onPress: () => Linking.openURL('https://compuclass.edu/terms'),
+        },
+        {
+          icon: 'download-outline',
+          title: 'Export My Data',
+          subtitle: 'Download your data',
+          onPress: handleExportData,
+        },
+        {
+          icon: 'warning',
+          title: 'Delete Account',
+          subtitle: 'Permanently delete your account',
+          onPress: handleDeleteAccount,
+          danger: true,
         },
       ],
     },
@@ -93,26 +265,27 @@ export default function SettingsScreen() {
       items: [
         {
           icon: 'help-circle',
-          title: 'Help & FAQ',
-          subtitle: 'Get answers to common questions',
-          onPress: () => Alert.alert('Help', 'Help section coming soon!'),
+          title: 'Help Center',
+          subtitle: 'Get help and support',
+          onPress: () => Linking.openURL('https://compuclass.edu/help'),
         },
         {
-          icon: 'mail',
+          icon: 'chatbubble',
           title: 'Contact Support',
-          subtitle: 'Get help from our team',
-          onPress: () => Alert.alert('Support', 'Contact support coming soon!'),
+          subtitle: 'support@compuclass.edu',
+          onPress: () => Linking.openURL('mailto:support@compuclass.edu'),
+        },
+        {
+          icon: 'star',
+          title: 'Rate App',
+          subtitle: 'Share your feedback',
+          onPress: () => Alert.alert('Thank You', 'Rating feature coming soon!'),
         },
         {
           icon: 'information-circle',
-          title: 'About CompuClass',
+          title: 'About',
           subtitle: 'Version 1.0.0',
-          onPress: () => {
-            Alert.alert(
-              'About CompuClass',
-              'CompuClass v1.0.0\n\nAn interactive learning platform for computer hardware education.\n\nDeveloped for educational purposes.'
-            );
-          },
+          onPress: () => Alert.alert('CompuClass', 'Version 1.0.0\n\nInteractive Computer Learning Platform\n\n© 2025 CompuClass'),
         },
       ],
     },
@@ -121,17 +294,17 @@ export default function SettingsScreen() {
   const renderSettingItem = (item, index) => (
     <TouchableOpacity
       key={index}
-      style={styles.settingItem}
+      style={[styles.settingItem, { borderBottomColor: theme.borderLight }]}
       onPress={item.onPress}
       disabled={item.hasSwitch}
     >
       <View style={styles.settingItemLeft}>
-        <View style={styles.settingIcon}>
-          <Ionicons name={item.icon} size={20} color="#10B981" />
+        <View style={[styles.settingIcon, { backgroundColor: item.danger ? '#FEE2E2' : theme.primary + '20' }]}>
+          <Ionicons name={item.icon} size={20} color={item.danger ? theme.error : theme.primary} />
         </View>
         <View style={styles.settingContent}>
-          <Text style={styles.settingTitle}>{item.title}</Text>
-          <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+          <Text style={[styles.settingTitle, { color: item.danger ? theme.error : theme.text }]}>{item.title}</Text>
+          <Text style={[styles.settingSubtitle, { color: theme.textSecondary }]}>{item.subtitle}</Text>
         </View>
       </View>
       <View style={styles.settingItemRight}>
@@ -150,33 +323,61 @@ export default function SettingsScreen() {
   );
 
   return (
-    <ScrollView style={styles.container}>
-      {/* User Profile Section */}
-      <View style={styles.profileSection}>
-        <View style={styles.profileAvatar}>
-          <Ionicons name="person" size={40} color="#fff" />
-        </View>
-        <Text style={styles.profileName}>Student</Text>
-        <Text style={styles.profileEmail}>student@compuclass.edu</Text>
+    <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
+      <View style={[styles.profileSection, { backgroundColor: theme.card }]}>
+        {user?.user_metadata?.avatar_url ? (
+          <Image source={{ uri: user.user_metadata.avatar_url }} style={styles.avatarImage} />
+        ) : (
+          <View style={[styles.profileAvatar, { backgroundColor: theme.primary }]}>
+            <Ionicons name="person" size={40} color="#fff" />
+          </View>
+        )}
+        <Text style={[styles.profileName, { color: theme.text }]}>{user?.user_metadata?.full_name || 'User'}</Text>
+        <Text style={[styles.profileEmail, { color: theme.textSecondary }]}>{user?.email || 'No email'}</Text>
       </View>
 
       {/* Settings Sections */}
       {settingsOptions.map((section, sectionIndex) => (
         <View key={sectionIndex} style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-          <View style={styles.settingsGroup}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>{section.title}</Text>
+          <View style={[styles.settingsGroup, { backgroundColor: theme.card }]}>
             {section.items.map((item, itemIndex) => renderSettingItem(item, itemIndex))}
           </View>
         </View>
       ))}
 
-      {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          CompuClass - Interactive Computer Learning
-        </Text>
-        <Text style={styles.footerVersion}>Version 1.0.0</Text>
+        <Text style={[styles.footerText, { color: theme.textSecondary }]}>CompuClass - Interactive Computer Learning</Text>
+        <Text style={[styles.footerVersion, { color: theme.textTertiary }]}>Version 1.0.0</Text>
       </View>
+
+      <Modal visible={showLanguageModal} animationType="slide" transparent>
+        <View style={[styles.modalOverlay, { backgroundColor: theme.overlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Select Language</Text>
+            {languages.map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={[styles.languageOption, { borderBottomColor: theme.borderLight }]}
+                onPress={() => {
+                  setLanguage(lang);
+                  saveSetting('language', lang);
+                  setShowLanguageModal(false);
+                }}
+              >
+                <Text style={[styles.languageText, { color: theme.text }]}>{lang}</Text>
+                {language === lang && <Ionicons name="checkmark" size={24} color="#10B981" />}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[styles.closeButton, { backgroundColor: theme.borderLight }]}
+              onPress={() => setShowLanguageModal(false)}
+            >
+              <Text style={[styles.closeButtonText, { color: theme.textSecondary }]}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -283,5 +484,52 @@ const styles = StyleSheet.create({
   footerVersion: {
     fontSize: 12,
     color: '#9CA3AF',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: '#1F2937',
+  },
+  languageOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  languageText: {
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  closeButton: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 12,
   },
 });
