@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 import { Camera } from 'expo-camera';
 import RealAR from '../components/RealAR';
 import RamAR from '../components/RamAR';

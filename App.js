@@ -29,6 +29,7 @@ import QuizDetailScreen from './screens/QuizDetailScreen';
 import StudentMaterialsScreen from './screens/StudentMaterialsScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import Sidebar from './components/Sidebar';
+
 import { authService } from './services/authService';
 import { supabase } from './config/supabase';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -168,6 +169,7 @@ function AppContent() {
   const [showSignUp, setShowSignUp] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+
   const [userRole, setUserRole] = useState(null);
   const [currentRoute, setCurrentRoute] = useState('');
   const navigationRef = useRef(null);
@@ -201,6 +203,8 @@ function AppContent() {
       },
     })
   ).current;
+
+
 
   useEffect(() => {
     console.log('🚀 App initializing...');

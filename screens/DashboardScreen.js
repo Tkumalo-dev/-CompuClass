@@ -37,14 +37,6 @@ export default function DashboardScreen({ navigation }) {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
-      {/* Welcome Section */}
-      <View style={[styles.welcomeSection, { backgroundColor: theme.card }]}>
-        <Text style={[styles.welcomeTitle, { color: theme.text }]}>Welcome to Your Computer Learning Journey</Text>
-        <Text style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>
-          Master PC hardware through interactive simulations, drag-and-drop assembly, and hands-on troubleshooting challenges
-        </Text>
-      </View>
-
       {/* Main Action Card */}
       <TouchableOpacity
         style={styles.mainActionCard}

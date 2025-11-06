@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -25,10 +26,16 @@ export default function StudentProgressScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [progressData, setProgressData] = useState({});
 
-  useEffect(() => {
-    loadStudents();
-    loadProgressData();
-  }, []);
+  const loadData = async () => {
+    await loadStudents();
+    await loadProgressData();
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   const loadStudents = async () => {
     try {
@@ -141,9 +148,14 @@ export default function StudentProgressScreen({ navigation }) {
             <Ionicons name="arrow-back" size={24} color={theme.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.text }]}>Student Progress</Text>
-          <TouchableOpacity onPress={() => setShowAddStudent(true)}>
-            <Ionicons name="person-add" size={24} color={theme.primary} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity onPress={loadData}>
+              <Ionicons name="refresh" size={24} color={theme.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowAddStudent(true)}>
+              <Ionicons name="person-add" size={24} color={theme.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
       </LinearGradient>
 

@@ -131,64 +131,14 @@ export default function SettingsScreen({ navigation }) {
     }
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'This will permanently delete your account and all data. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await supabase.from('profiles').delete().eq('id', user.id);
-              await authService.signOut();
-              Alert.alert('Account Deleted', 'Your account has been deleted');
-            } catch (error) {
-              Alert.alert('Error', error.message);
-            }
-          },
-        },
-      ]
-    );
-  };
+
 
   const languages = ['English', 'Spanish', 'French', 'German', 'Arabic', 'Chinese'];
 
   const settingsOptions = [
     {
-      title: 'Notifications',
-      items: [
-        {
-          icon: 'notifications',
-          title: 'Push Notifications',
-          subtitle: 'Get app notifications',
-          hasSwitch: true,
-          value: notifications,
-          onToggle: (val) => { setNotifications(val); saveSetting('notifications', val); },
-        },
-        {
-          icon: 'mail',
-          title: 'Email Notifications',
-          subtitle: 'Receive updates via email',
-          hasSwitch: true,
-          value: emailNotifications,
-          onToggle: (val) => { setEmailNotifications(val); saveSetting('emailNotifications', val); },
-        },
-      ],
-    },
-    {
       title: 'Preferences',
       items: [
-        {
-          icon: 'volume-high',
-          title: 'Sound Effects',
-          subtitle: 'Enable audio feedback',
-          hasSwitch: true,
-          value: soundEffects,
-          onToggle: (val) => { setSoundEffects(val); saveSetting('soundEffects', val); },
-        },
         {
           icon: 'moon',
           title: 'Dark Mode',
@@ -197,93 +147,14 @@ export default function SettingsScreen({ navigation }) {
           value: isDark,
           onToggle: toggleTheme,
         },
-        {
-          icon: 'download',
-          title: 'Auto-Download',
-          subtitle: 'Download content automatically',
-          hasSwitch: true,
-          value: autoDownload,
-          onToggle: (val) => { setAutoDownload(val); saveSetting('autoDownload', val); },
-        },
-        {
-          icon: 'language',
-          title: 'Language',
-          subtitle: language,
-          onPress: () => setShowLanguageModal(true),
-        },
       ],
     },
     {
-      title: 'Storage',
+      title: 'About',
       items: [
-        {
-          icon: 'folder',
-          title: 'Cache Size',
-          subtitle: cacheSize,
-          onPress: () => {},
-        },
-        {
-          icon: 'trash',
-          title: 'Clear Cache',
-          subtitle: 'Free up storage space',
-          onPress: handleClearCache,
-        },
-      ],
-    },
-    {
-      title: 'Privacy & Security',
-      items: [
-        {
-          icon: 'shield-checkmark',
-          title: 'Privacy Policy',
-          subtitle: 'View our privacy policy',
-          onPress: () => Linking.openURL('https://compuclass.edu/privacy'),
-        },
-        {
-          icon: 'document-text',
-          title: 'Terms of Service',
-          subtitle: 'Read our terms',
-          onPress: () => Linking.openURL('https://compuclass.edu/terms'),
-        },
-        {
-          icon: 'download-outline',
-          title: 'Export My Data',
-          subtitle: 'Download your data',
-          onPress: handleExportData,
-        },
-        {
-          icon: 'warning',
-          title: 'Delete Account',
-          subtitle: 'Permanently delete your account',
-          onPress: handleDeleteAccount,
-          danger: true,
-        },
-      ],
-    },
-    {
-      title: 'Support',
-      items: [
-        {
-          icon: 'help-circle',
-          title: 'Help Center',
-          subtitle: 'Get help and support',
-          onPress: () => Linking.openURL('https://compuclass.edu/help'),
-        },
-        {
-          icon: 'chatbubble',
-          title: 'Contact Support',
-          subtitle: 'support@compuclass.edu',
-          onPress: () => Linking.openURL('mailto:support@compuclass.edu'),
-        },
-        {
-          icon: 'star',
-          title: 'Rate App',
-          subtitle: 'Share your feedback',
-          onPress: () => Alert.alert('Thank You', 'Rating feature coming soon!'),
-        },
         {
           icon: 'information-circle',
-          title: 'About',
+          title: 'About CompuClass',
           subtitle: 'Version 1.0.0',
           onPress: () => Alert.alert('CompuClass', 'Version 1.0.0\n\nInteractive Computer Learning Platform\n\n© 2025 CompuClass'),
         },

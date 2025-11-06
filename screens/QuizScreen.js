@@ -144,15 +144,24 @@ export default function QuizScreen({ route, navigation }) {
       const user = await authService.getCurrentUser();
       const percentage = Math.round((finalScore / questions.length) * 100);
 
-      await supabase.from('quiz_attempts').insert({
+      console.log('📝 Submitting quiz attempt:', { user_id: user.id, quiz_id: quizId, score: percentage });
+
+      const { data, error } = await supabase.from('quiz_attempts').insert({
         user_id: user.id,
         quiz_id: quizId,
         score: percentage,
       });
 
+      if (error) {
+        console.error('❌ Quiz submission error:', error.message);
+        console.error('Error details:', error);
+      } else {
+        console.log('✅ Quiz submitted successfully:', data);
+      }
+
       setQuizCompleted(true);
     } catch (error) {
-      console.error('Error submitting quiz:', error);
+      console.error('❌ Quiz submission exception:', error);
       setQuizCompleted(true);
     }
   };
@@ -207,7 +216,7 @@ export default function QuizScreen({ route, navigation }) {
               <TouchableOpacity
                 key={q.id}
                 style={[styles.quizCard, { backgroundColor: theme.card }]}
-                onPress={() => navigation.push('Quiz', { quizId: q.id })}
+                onPress={() => navigation.navigate('Quiz', { quizId: q.id })}
               >
                 <View style={styles.quizIcon}>
                   <Ionicons name="document-text" size={32} color="#10B981" />

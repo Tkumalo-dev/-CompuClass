@@ -21,7 +21,6 @@ export default function ProfileScreen({ onLogout }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [fullName, setFullName] = useState('');
   const [avatarFile, setAvatarFile] = useState(null);
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -71,7 +70,7 @@ export default function ProfileScreen({ onLogout }) {
   };
 
   const handleChangePassword = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    if (!newPassword || !confirmPassword) {
       Alert.alert('Error', 'All fields are required');
       return;
     }
@@ -85,10 +84,9 @@ export default function ProfileScreen({ onLogout }) {
     }
     setLoading(true);
     try {
-      await authService.updatePassword(currentPassword, newPassword);
+      await authService.updatePassword(null, newPassword);
       Alert.alert('Success', 'Password changed successfully');
       setShowPasswordModal(false);
-      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
@@ -123,8 +121,6 @@ export default function ProfileScreen({ onLogout }) {
   const profileOptions = [
     { icon: 'person', title: 'Edit Profile', onPress: () => setShowEditModal(true) },
     { icon: 'lock-closed', title: 'Change Password', onPress: () => setShowPasswordModal(true) },
-    { icon: 'trophy', title: 'Achievements', onPress: () => Alert.alert('Coming Soon') },
-    { icon: 'stats-chart', title: 'Progress', onPress: () => Alert.alert('Coming Soon') },
   ];
 
   return (
@@ -196,14 +192,6 @@ export default function ProfileScreen({ onLogout }) {
         <View style={[styles.modalOverlay, { backgroundColor: theme.overlay }]}>
           <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
             <Text style={[styles.modalTitle, { color: theme.text }]}>Change Password</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.borderLight, color: theme.text }]}
-              placeholder="Current Password"
-              placeholderTextColor={theme.textTertiary}
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              secureTextEntry
-            />
             <TextInput
               style={[styles.input, { backgroundColor: theme.borderLight, color: theme.text }]}
               placeholder="New Password"

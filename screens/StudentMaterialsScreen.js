@@ -101,7 +101,7 @@ export default function StudentMaterialsScreen({ navigation }) {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Quizzes</Text>
             {quizzes.map((quiz) => (
-              <TouchableOpacity key={quiz.id} style={[styles.itemCard, { backgroundColor: theme.card }]}>
+              <TouchableOpacity key={quiz.id} style={[styles.itemCard, { backgroundColor: theme.card }]} onPress={() => navigation.navigate('Quiz', { quiz })}>
                 <Ionicons name="help-circle" size={24} color="#8B5CF6" />
                 <Text style={[styles.itemTitle, { color: theme.text }]}>{quiz.title}</Text>
                 <Text style={[styles.questionCount, { color: theme.textSecondary }]}>{quiz.quiz_questions?.length || 0} questions</Text>

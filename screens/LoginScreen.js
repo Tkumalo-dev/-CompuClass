@@ -40,19 +40,7 @@ export default function LoginScreen({ onLogin, onSignUp }) {
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      Alert.alert('Enter Email', 'Please enter your email address to reset password');
-      return;
-    }
 
-    try {
-      await authService.resetPassword(email);
-      Alert.alert('Success', 'Password reset email sent! Check your inbox.');
-    } catch (error) {
-      Alert.alert('Error', error.message);
-    }
-  };
 
   return (
     <KeyboardAvoidingView 
@@ -124,8 +112,6 @@ export default function LoginScreen({ onLogin, onSignUp }) {
             </TouchableOpacity>
           </View>
 
-
-
           {/* Login Button */}
           <TouchableOpacity onPress={handleLogin} style={styles.loginButtonContainer} disabled={loading}>
             <LinearGradient
@@ -135,19 +121,6 @@ export default function LoginScreen({ onLogin, onSignUp }) {
               <Text style={styles.loginButtonText}>{loading ? 'Signing In...' : 'Sign In'}</Text>
               <Ionicons name="arrow-forward" size={20} color="#fff" style={styles.buttonIcon} />
             </LinearGradient>
-          </TouchableOpacity>
-
-          {/* Divider */}
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          {/* Social Login */}
-          <TouchableOpacity style={styles.socialButton}>
-            <Ionicons name="logo-google" size={20} color="#4285F4" />
-            <Text style={styles.socialButtonText}>Continue with Google</Text>
           </TouchableOpacity>
 
           {/* Sign Up */}
@@ -246,15 +219,6 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     padding: 4,
-  },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    color: '#10B981',
-    fontSize: 14,
-    fontWeight: '600',
   },
   loginButtonContainer: {
     marginBottom: 24,

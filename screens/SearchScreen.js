@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,20 +6,57 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { supabase } from '../config/supabase';
+import { downloadAsync, documentDirectory } from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 
-export default function SearchScreen() {
+export default function SearchScreen({ navigation }) {
   const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
+  const [quizzes, setQuizzes] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const categories = [
-    { icon: 'desktop', title: 'PC Components', color: '#10B981' },
-    { icon: 'laptop', title: 'Windows 11', color: '#3B82F6' },
-    { icon: 'help-circle', title: 'Quizzes', color: '#F59E0B' },
-    { icon: 'bug', title: 'Troubleshooting', color: '#EF4444' },
-  ];
+  useEffect(() => {
+    if (searchQuery.length > 0) {
+      searchContent();
+    } else {
+      setQuizzes([]);
+      setDocuments([]);
+    }
+  }, [searchQuery]);
+
+  const searchContent = async () => {
+    setLoading(true);
+    try {
+      const [quizzesRes, docsRes] = await Promise.all([
+        supabase.from('quizzes').select('*, quiz_questions(*)').ilike('title', `%${searchQuery}%`),
+        supabase.from('documents').select('*').ilike('title', `%${searchQuery}%`)
+      ]);
+      setQuizzes(quizzesRes.data || []);
+      setDocuments(docsRes.data || []);
+    } catch (error) {
+      console.error('Search error:', error);
+    }
+    setLoading(false);
+  };
+
+  const openDocument = async (doc) => {
+    try {
+      const fileName = doc.file_name || `${doc.title}.pdf`;
+      const fileUri = `${documentDirectory}${fileName}`;
+      const downloadResult = await downloadAsync(doc.file_url, fileUri);
+      if (downloadResult.status === 200 && await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadResult.uri);
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.surface }]}>
@@ -35,17 +72,67 @@ export default function SearchScreen() {
       </View>
 
       <ScrollView style={styles.content}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Browse Categories</Text>
-        <View style={styles.categoriesGrid}>
-          {categories.map((category, index) => (
-            <TouchableOpacity key={index} style={[styles.categoryCard, { backgroundColor: theme.card }]}>
-              <View style={[styles.categoryIcon, { backgroundColor: category.color + '20' }]}>
-                <Ionicons name={category.icon} size={24} color={category.color} />
+        {loading && <ActivityIndicator size="large" color={theme.primary} style={styles.loader} />}
+        
+        {searchQuery.length === 0 && (
+          <View style={styles.emptyState}>
+            <Ionicons name="search" size={64} color={theme.textTertiary} />
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>Search for Content</Text>
+            <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>Find quizzes and documents</Text>
+          </View>
+        )}
+
+        {searchQuery.length > 0 && !loading && (
+          <>
+            {quizzes.length > 0 && (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Quizzes</Text>
+                {quizzes.map((quiz) => (
+                  <TouchableOpacity
+                    key={quiz.id}
+                    style={[styles.resultCard, { backgroundColor: theme.card }]}
+                    onPress={() => navigation.navigate('Quiz', { quiz })}
+                  >
+                    <Ionicons name="help-circle" size={24} color="#F59E0B" />
+                    <View style={styles.resultInfo}>
+                      <Text style={[styles.resultTitle, { color: theme.text }]}>{quiz.title}</Text>
+                      <Text style={[styles.resultSubtitle, { color: theme.textSecondary }]}>
+                        {quiz.quiz_questions?.length || 0} questions
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={theme.textTertiary} />
+                  </TouchableOpacity>
+                ))}
               </View>
-              <Text style={[styles.categoryTitle, { color: theme.text }]}>{category.title}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+            )}
+
+            {documents.length > 0 && (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Documents</Text>
+                {documents.map((doc) => (
+                  <TouchableOpacity
+                    key={doc.id}
+                    style={[styles.resultCard, { backgroundColor: theme.card }]}
+                    onPress={() => openDocument(doc)}
+                  >
+                    <Ionicons name="document-text" size={24} color="#8B5CF6" />
+                    <View style={styles.resultInfo}>
+                      <Text style={[styles.resultTitle, { color: theme.text }]}>{doc.title}</Text>
+                      <Text style={[styles.resultSubtitle, { color: theme.textSecondary }]}>
+                        {doc.file_type || 'PDF'}
+                      </Text>
+                    </View>
+                    <Ionicons name="download-outline" size={20} color={theme.textTertiary} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {quizzes.length === 0 && documents.length === 0 && (
+              <Text style={[styles.noResults, { color: theme.textSecondary }]}>No results found</Text>
+            )}
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -83,31 +170,54 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: 16,
   },
-  categoriesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  categoryCard: {
-    width: '48%',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  categoryIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    paddingVertical: 80,
   },
-  categoryTitle: {
-    fontSize: 14,
+  emptyTitle: {
+    fontSize: 20,
     fontWeight: '600',
     color: '#1F2937',
+    marginTop: 16,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 8,
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  resultCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    gap: 12,
+  },
+  resultInfo: {
+    flex: 1,
+  },
+  resultTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  resultSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  noResults: {
     textAlign: 'center',
+    fontSize: 16,
+    color: '#6B7280',
+    marginTop: 40,
   },
 });
