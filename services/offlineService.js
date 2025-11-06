@@ -5,13 +5,19 @@ class OfflineService {
   constructor() {
     this.db = null;
     this.isOnline = true;
-    this.init();
+    this.initialized = false;
   }
 
   async init() {
-    this.db = await SQLite.openDatabaseAsync('compuclass.db');
-    await this.createTables();
-    this.setupNetworkListener();
+    if (this.initialized) return;
+    try {
+      this.db = await SQLite.openDatabaseAsync('compuclass.db');
+      await this.createTables();
+      this.setupNetworkListener();
+      this.initialized = true;
+    } catch (error) {
+      console.error('OfflineService init error:', error);
+    }
   }
 
   async createTables() {
@@ -50,6 +56,8 @@ class OfflineService {
   }
 
   async saveCourse(course) {
+    await this.init();
+    if (!this.db) return;
     await this.db.runAsync(
       'INSERT OR REPLACE INTO courses (id, title, content, synced) VALUES (?, ?, ?, ?)',
       [course.id, course.title, JSON.stringify(course.content), 1]
@@ -57,6 +65,8 @@ class OfflineService {
   }
 
   async getCourses() {
+    await this.init();
+    if (!this.db) return [];
     const result = await this.db.getAllAsync('SELECT * FROM courses');
     return result.map(row => ({
       ...row,
@@ -65,6 +75,8 @@ class OfflineService {
   }
 
   async saveQuizResult(result) {
+    await this.init();
+    if (!this.db) return;
     await this.db.runAsync(
       'INSERT INTO quiz_results (id, quiz_id, score, answers, synced) VALUES (?, ?, ?, ?, ?)',
       [result.id, result.quiz_id, result.score, JSON.stringify(result.answers), this.isOnline ? 1 : 0]
@@ -72,6 +84,8 @@ class OfflineService {
   }
 
   async syncPendingData() {
+    await this.init();
+    if (!this.db) return;
     // Sync unsynced quiz results
     const unsyncedResults = await this.db.getAllAsync(
       'SELECT * FROM quiz_results WHERE synced = 0'

@@ -32,7 +32,6 @@ import Sidebar from './components/Sidebar';
 import { authService } from './services/authService';
 import { supabase } from './config/supabase';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { offlineService } from './services/offlineService';
 import { useOffline } from './hooks/useOffline';
 
 const Tab = createBottomTabNavigator();
@@ -52,6 +51,7 @@ function LecturerStack() {
     </Stack.Navigator>
   );
 }
+
 const { width } = Dimensions.get('window');
 
 function CustomTabBar({ state, descriptors, navigation }) {
@@ -169,13 +169,18 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [currentRoute, setCurrentRoute] = useState('');
   const navigationRef = useRef(null);
 
   const sidebarTranslateX = useRef(new Animated.Value(-width * 0.8)).current;
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dx > 20 && Math.abs(gestureState.dy) < 80,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Disable sidebar swipe when in PC Lab
+        if (currentRoute === 'PC Lab') return false;
+        return gestureState.dx > 20 && Math.abs(gestureState.dy) < 80;
+      },
       onPanResponderMove: (_, gestureState) => {
         const newValue = Math.min(0, -width * 0.8 + gestureState.dx);
         sidebarTranslateX.setValue(newValue);
@@ -198,73 +203,114 @@ function AppContent() {
   ).current;
 
   useEffect(() => {
+    console.log('🚀 App initializing...');
     checkUser();
   }, []);
 
   const checkUser = async () => {
+    console.log('🔍 Checking user session...');
     try {
+      // Force logout all users - remove this after first run
+      await supabase.auth.signOut();
+      setLoading(false);
+      return;
+      
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('📱 Session status:', session ? 'Active' : 'No session');
+      
       if (session) {
         const user = await authService.getCurrentUser();
+        console.log('👤 User data:', user ? `${user.email} (${user.profile?.role})` : 'No user');
+        
         if (user) {
           setUserRole(user.profile?.role || 'student');
           setIsLoggedIn(true);
           setIsFirstLaunch(false);
+          console.log('✅ User authenticated successfully');
         }
       } else {
+        console.log('⚠️ No session found, signing out...');
         await authService.signOut();
       }
     } catch (error) {
+      console.error('❌ Error checking user:', error);
+      console.error('Error details:', error.message);
       await authService.signOut();
     } finally {
       setLoading(false);
+      console.log('✅ App initialization complete');
     }
   };
 
   const handleOnboardingComplete = () => {
+    console.log('✅ Onboarding completed');
     setIsFirstLaunch(false);
   };
 
   const handleLogin = async () => {
-    const user = await authService.getCurrentUser();
-    setUserRole(user?.profile?.role || 'student');
-    setIsLoggedIn(true);
+    console.log('🔐 Handling login...');
+    try {
+      const user = await authService.getCurrentUser();
+      console.log('👤 Login user:', user ? `${user.email} (${user.profile?.role})` : 'No user');
+      setUserRole(user?.profile?.role || 'student');
+      setIsLoggedIn(true);
+      console.log('✅ Login successful');
+    } catch (error) {
+      console.error('❌ Login error:', error);
+    }
   };
 
   const handleShowSignUp = () => {
+    console.log('📝 Showing sign up screen');
     setShowSignUp(true);
   };
 
   const handleBackToLogin = () => {
+    console.log('🔙 Back to login screen');
     setShowSignUp(false);
   };
 
   const handleSignUpSuccess = async () => {
-    const user = await authService.getCurrentUser();
-    setUserRole(user?.profile?.role || 'student');
-    setShowSignUp(false);
-    setIsLoggedIn(true);
+    console.log('✅ Sign up successful, logging in...');
+    try {
+      const user = await authService.getCurrentUser();
+      console.log('👤 New user:', user ? `${user.email} (${user.profile?.role})` : 'No user');
+      setUserRole(user?.profile?.role || 'student');
+      setShowSignUp(false);
+      setIsLoggedIn(true);
+    } catch (error) {
+      console.error('❌ Sign up success handler error:', error);
+    }
   };
 
   const handleLogout = async () => {
+    console.log('🚪 Logging out...');
     try {
       await authService.signOut();
       setIsLoggedIn(false);
       setUserRole(null);
+      console.log('✅ Logout successful');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ Logout error:', error);
     }
   };
 
   const handleNavigate = (screen) => {
-    navigationRef.current?.navigate(screen);
+    console.log('🧭 Navigating to:', screen);
+    try {
+      navigationRef.current?.navigate(screen);
+    } catch (error) {
+      console.error('❌ Navigation error:', error);
+    }
   };
 
   if (loading) {
+    console.log('⏳ App loading...');
     return null;
   }
 
   if (isFirstLaunch) {
+    console.log('👋 Showing onboarding screen');
     return (
       <>
         <StatusBar style="light" backgroundColor="#0F172A" />
@@ -275,6 +321,7 @@ function AppContent() {
 
   if (!isLoggedIn) {
     if (showSignUp) {
+      console.log('📝 Showing sign up screen');
       return (
         <>
           <StatusBar style="light" backgroundColor="#0F172A" />
@@ -282,6 +329,7 @@ function AppContent() {
         </>
       );
     }
+    console.log('🔐 Showing login screen');
     return (
       <>
         <StatusBar style="light" backgroundColor="#0F172A" />
@@ -290,120 +338,129 @@ function AppContent() {
     );
   }
 
+  console.log('🏠 Rendering main app, user role:', userRole);
+  
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: theme.surface }} edges={['top', 'left', 'right']}>
-        <View style={{ flex: 1 }} {...panResponder.panHandlers}>
-          <NavigationContainer ref={navigationRef}>
-          <StatusBar style="dark" backgroundColor="#F0FDF4" />
-        <Tab.Navigator
-          tabBar={props => <CustomTabBar {...props} />}
-          screenOptions={({ route }) => ({
-            header: ({ route }) => (
-              <CustomHeader 
-                title={route.name} 
-                showBadge={route.name === 'Dashboard'}
-                onMenuPress={() => setSidebarVisible(true)}
-              />
-            ),
-          })}
+        <NavigationContainer 
+          ref={navigationRef}
+          onStateChange={() => {
+            const route = navigationRef.current?.getCurrentRoute();
+            setCurrentRoute(route?.name || '');
+          }}
         >
-          {userRole === 'lecturer' ? (
-            <Tab.Screen 
-              name="Lecturer" 
-              component={LecturerStack}
-              options={{ 
-                title: 'Lecturer',
-                tabBarLabel: 'Lecturer'
-              }}
-            />
-          ) : (
-            <Tab.Screen 
-              name="Dashboard" 
-              component={DashboardScreen}
-              options={{ 
-                title: 'Home',
-                tabBarLabel: 'Home'
-              }}
-            />
-          )}
-          <Tab.Screen 
-            name="Search" 
-            component={SearchScreen}
-            options={{ 
-              title: 'Search',
-              tabBarLabel: 'Search'
-            }}
-          />
-          <Tab.Screen 
-            name="Profile" 
-            options={{ 
-              title: 'Profile',
-              tabBarLabel: 'Profile'
-            }}
-          >
-            {() => <ProfileScreen onLogout={handleLogout} />}
-          </Tab.Screen>
-          <Tab.Screen 
-            name="PC Lab" 
-            component={PCLabScreen}
-            options={{ 
-              title: 'PC Lab',
-              tabBarButton: () => null,
-              headerShown: false
-            }}
-          />
-          <Tab.Screen 
-            name="Windows 11" 
-            component={Windows11SimulatorScreen}
-            options={({ route }) => ({ 
-              title: 'Windows 11',
-              tabBarButton: () => null,
-              headerShown: false,
-              tabBarStyle: { display: 'none' }
-            })}
-          />
-          <Tab.Screen 
-            name="Quiz" 
-            component={QuizScreen}
-            options={{ 
-              title: 'Quiz',
-              tabBarButton: () => null
-            }}
-          />
-          <Tab.Screen 
-            name="Troubleshoot" 
-            component={TroubleshootingScreen}
-            options={{ 
-              title: 'Troubleshoot',
-              tabBarButton: () => null
-            }}
-          />
-          <Tab.Screen 
-            name="Materials" 
-            component={StudentMaterialsScreen}
-            options={{ 
-              title: 'Materials',
-              tabBarButton: () => null
-            }}
-          />
-          <Tab.Screen 
-            name="Settings" 
-            component={SettingsScreen}
-            options={{ 
-              title: 'Settings',
-              tabBarButton: () => null
-            }}
-          />
-        </Tab.Navigator>
-          </NavigationContainer>
-          <Sidebar 
-            visible={sidebarVisible} 
-            onClose={() => setSidebarVisible(false)}
-            onNavigate={handleNavigate}
-            translateX={sidebarTranslateX}
-          />
-        </View>
+          <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+            <StatusBar style="dark" backgroundColor="#F0FDF4" />
+            <Tab.Navigator
+              tabBar={props => <CustomTabBar {...props} />}
+              screenOptions={({ route }) => ({
+                header: ({ route }) => (
+                  <CustomHeader 
+                    title={route.name} 
+                    showBadge={route.name === 'Dashboard'}
+                    onMenuPress={() => setSidebarVisible(true)}
+                  />
+                ),
+              })}
+            >
+              {userRole === 'lecturer' ? (
+                <Tab.Screen 
+                  name="Lecturer" 
+                  component={LecturerStack}
+                  options={{ 
+                    title: 'Lecturer',
+                    tabBarLabel: 'Lecturer'
+                  }}
+                />
+              ) : (
+                <Tab.Screen 
+                  name="Dashboard" 
+                  component={DashboardScreen}
+                  options={{ 
+                    title: 'Home',
+                    tabBarLabel: 'Home'
+                  }}
+                />
+              )}
+              <Tab.Screen 
+                name="Search" 
+                component={SearchScreen}
+                options={{ 
+                  title: 'Search',
+                  tabBarLabel: 'Search'
+                }}
+              />
+              <Tab.Screen 
+                name="Profile" 
+                options={{ 
+                  title: 'Profile',
+                  tabBarLabel: 'Profile'
+                }}
+              >
+                {() => <ProfileScreen onLogout={handleLogout} />}
+              </Tab.Screen>
+              <Tab.Screen 
+                name="PC Lab" 
+                component={PCLabScreen}
+                options={{ 
+                  title: 'PC Lab',
+                  tabBarButton: () => null,
+                  headerShown: false,
+                  tabBarStyle: { display: 'none' }
+                }}
+              />
+              <Tab.Screen 
+                name="Windows 11" 
+                component={Windows11SimulatorScreen}
+                options={({ route }) => ({ 
+                  title: 'Windows 11',
+                  tabBarButton: () => null,
+                  headerShown: false,
+                  tabBarStyle: { display: 'none' }
+                })}
+              />
+              <Tab.Screen 
+                name="Quiz" 
+                component={QuizScreen}
+                options={{ 
+                  title: 'Quiz',
+                  tabBarButton: () => null
+                }}
+              />
+              <Tab.Screen 
+                name="Troubleshoot" 
+                component={TroubleshootingScreen}
+                options={{ 
+                  title: 'Troubleshoot',
+                  tabBarButton: () => null
+                }}
+              />
+              <Tab.Screen 
+                name="Materials" 
+                component={StudentMaterialsScreen}
+                options={{ 
+                  title: 'Materials',
+                  tabBarButton: () => null
+                }}
+              />
+              <Tab.Screen 
+                name="Settings" 
+                component={SettingsScreen}
+                options={{ 
+                  title: 'Settings',
+                  tabBarButton: () => null
+                }}
+              />
+            </Tab.Navigator>
+          </View>
+        </NavigationContainer>
+        <Sidebar 
+          visible={sidebarVisible} 
+          onClose={() => setSidebarVisible(false)}
+          onNavigate={handleNavigate}
+          translateX={sidebarTranslateX}
+        />
       </SafeAreaView>
     </SafeAreaProvider>
   );

@@ -9,8 +9,14 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '../context/ThemeContext';
+import { Camera } from 'expo-camera';
+import RealAR from '../components/RealAR';
+import RamAR from '../components/RamAR';
+import MotherboardAR from '../components/MotherboardAR';
+import StorageAR from '../components/StorageAR';
+import CPUAR from '../components/CPUAR';
+import GPUAR from '../components/GPUAR';
+import PSUAR from '../components/PSUAR';
 
 
 const { width, height } = Dimensions.get('window');
@@ -89,8 +95,7 @@ export default function PCLabScreen({ navigation }) {
         }
       } else {
         Alert.alert(
-          'Wrong Component',
-          `Please install the ${expectedComponent.name} first.`
+          'Wrong Component'
         );
       }
     }
@@ -107,214 +112,157 @@ export default function PCLabScreen({ navigation }) {
 
   if (showMotherboardFullscreen) {
     return (
-      <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
-        {/* Header */}
-        <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => setSelectedModule(null)}
-          >
-            <Ionicons name="arrow-back" size={24} color={theme.primary} />
-            <Text style={[styles.backText, { color: theme.primary }]}>Back</Text>
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Interactive PC Building Lab</Text>
-        </View>
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowMotherboardFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <MotherboardAR />
+      </View>
+    );
+  }
 
-        {/* Progress Section */}
-        <View style={[styles.progressSection, { backgroundColor: theme.card }]}>
-          <Text style={[styles.progressTitle, { color: theme.text }]}>Assembly Progress</Text>
-          <View style={[styles.progressBar, { backgroundColor: theme.borderLight }]}>
-            <View 
-              style={[
-                styles.progressFill, 
-                { width: `${(currentStep / steps.length) * 100}%` }
-              ]} 
-            />
-          </View>
-          <Text style={[styles.progressText, { color: theme.textSecondary }]}>
-            Step {currentStep + 1} of {steps.length}
-          </Text>
-          {currentStep < steps.length && (
-            <Text style={[styles.currentStep, { color: theme.primary }]}>
-              Next: {steps[currentStep]}
-            </Text>
-          )}
-        </View>
+  if (showCPUFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowCPUFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <CPUAR />
+      </View>
+    );
+  }
 
-        {/* PC Case Visualization */}
-        <View style={styles.pcCaseSection}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>PC Case</Text>
-          <View style={[styles.pcCase, { backgroundColor: theme.card }]}>
-            <Text style={[styles.pcCaseTitle, { color: theme.text }]}>Computer Case</Text>
-            <View style={styles.installedComponents}>
-              {components.map((component) => (
-                <View
-                  key={component.id}
-                  style={[
-                    styles.componentSlot,
-                    { backgroundColor: theme.surface, borderColor: theme.border },
-                    getComponentStatus(component.id) && { backgroundColor: theme.primary + '20', borderColor: theme.primary }
-                  ]}
+  if (showRAMFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowRAMFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <RamAR />
+      </View>
+    );
+  }
+
+  if (showGPUFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowGPUFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <GPUAR />
+      </View>
+    );
+  }
+
+  if (showStorageFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowStorageFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <StorageAR />
+      </View>
+    );
+  }
+
+  if (showPSUFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setShowPSUFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <PSUAR />
+      </View>
+    );
+  }
+
+  if (isFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <TouchableOpacity 
+          style={styles.fullscreenBackButton} 
+          onPress={() => setIsFullscreen(false)}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <RealAR />
+        {showInstructions && (
+          <View style={styles.instructionsPopup}>
+            <View style={styles.popupContent}>
+              <View style={styles.popupHeader}>
+                <Text style={styles.popupTitle}>How to Use 3D Viewer</Text>
+                <TouchableOpacity 
+                  style={styles.popupCloseButton}
+                  onPress={() => setShowInstructions(false)}
                 >
-                  <Ionicons 
-                    name={component.icon} 
-                    size={20} 
-                    color={getComponentStatus(component.id) ? '#10B981' : '#D1D5DB'} 
-                  />
-                  <Text 
-                    style={[
-                      styles.componentSlotText,
-                      { color: theme.textSecondary },
-                      getComponentStatus(component.id) && { color: theme.primary, fontWeight: '600' }
-                    ]}
-                  >
-                    {component.name}
-                  </Text>
-                </View>
-              ))}
+                  <Ionicons name="close" size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.popupInstruction}>
+                <Ionicons name="hand-left" size={16} color="#10B981" />
+                <Text style={styles.popupText}>Drag to rotate the 3D PC model</Text>
+              </View>
+              <View style={styles.popupInstruction}>
+                <Ionicons name="resize" size={16} color="#3B82F6" />
+                <Text style={styles.popupText}>Pinch to zoom in/out</Text>
+              </View>
+              <View style={styles.popupInstruction}>
+                <Ionicons name="construct" size={16} color="#F59E0B" />
+                <Text style={styles.popupText}>Tap components to learn more</Text>
+              </View>
             </View>
           </View>
-        </View>
-
-        {/* Components Section */}
-        <View style={styles.componentsSection}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Components</Text>
-          <View style={styles.componentsGrid}>
-            {components.map((component) => (
-              <TouchableOpacity
-                key={component.id}
-                style={[
-                  styles.componentCard,
-                  { backgroundColor: theme.card },
-                  getComponentStatus(component.id) && { backgroundColor: theme.surface, opacity: 0.7 }
-                ]}
-                onPress={() => handleComponentPress(component.id)}
-                disabled={getComponentStatus(component.id)}
-              >
-                <Ionicons 
-                  name={component.icon} 
-                  size={32} 
-                  color={getComponentStatus(component.id) ? '#9CA3AF' : '#3B82F6'} 
-                />
-                <Text 
-                  style={[
-                    styles.componentName,
-                    { color: theme.text },
-                    getComponentStatus(component.id) && { color: theme.textTertiary }
-                  ]}
-                >
-                  {component.name}
-                </Text>
-                {getComponentStatus(component.id) && (
-                  <View style={styles.installedBadge}>
-                    <Ionicons name="checkmark" size={16} color="#fff" />
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Reset Button */}
-        <View style={styles.actionSection}>
-          <TouchableOpacity style={styles.resetButton} onPress={resetBuild}>
-            <Ionicons name="refresh" size={20} color="#fff" />
-            <Text style={styles.resetButtonText}>Start New Build</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        )}
+      </View>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.surface }]}>
+    <ScrollView style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={theme.primary} />
-          <Text style={[styles.backText, { color: theme.primary }]}>Back</Text>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color="#10B981" />
+          <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <View style={[styles.headerIcon, { backgroundColor: theme.primary }]}>
+          <View style={styles.headerIcon}>
             <Ionicons name="desktop" size={20} color="#fff" />
           </View>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Virtual PC Lab</Text>
+          <Text style={styles.headerTitle}>Interactive PC Building Lab</Text>
         </View>
       </View>
 
-      {/* Hero Section */}
-      <View style={[styles.heroSection, { backgroundColor: theme.card }]}>
-        <Text style={[styles.heroTitle, { color: theme.text }]}>
-          Master PC Hardware Through Interactive Learning
-        </Text>
-        <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-          Build, diagnose, and troubleshoot PCs in a safe virtual environment
-        </Text>
-      </View>
-
-      {/* Learning Modules */}
-      <View style={styles.modulesContainer}>
-        {learningModules.map((module) => (
-          <TouchableOpacity
-            key={module.id}
-            style={[
-              styles.moduleCard,
-              { backgroundColor: theme.card },
-              module.featured && { borderWidth: 2, borderColor: theme.primary }
-            ]}
-            onPress={() => handleModulePress(module.id)}
+      {/* PC Case Visualization */}
+      <View style={styles.pcCaseSection}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>3D PC Model</Text>
+          <TouchableOpacity 
+            style={styles.fullscreenButton} 
+            onPress={() => {
+              setIsFullscreen(true);
+              setShowInstructions(true);
+            }}
           >
-            {module.featured && (
-              <LinearGradient
-                colors={['#10B981', '#3B82F6']}
-                style={styles.featuredBadge}
-              >
-                <Text style={styles.featuredText}>🎯 Drag & Drop</Text>
-              </LinearGradient>
-            )}
-            
-            <View style={styles.moduleHeader}>
-              <View style={[styles.moduleIcon, { backgroundColor: module.color }]}>
-                <Ionicons name={module.icon} size={24} color="#fff" />
-              </View>
-              <View style={styles.moduleInfo}>
-                <Text style={[styles.moduleTitle, { color: theme.text }]}>{module.title}</Text>
-                <Text style={[styles.moduleDescription, { color: theme.textSecondary }]}>{module.description}</Text>
-              </View>
-            </View>
-
-            <View style={styles.moduleStats}>
-              <View style={styles.statItem}>
-                <Ionicons name="time" size={16} color="#6B7280" />
-                <Text style={[styles.statText, { color: theme.textSecondary }]}>{module.duration}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Ionicons name="book" size={16} color="#6B7280" />
-                <Text style={[styles.statText, { color: theme.textSecondary }]}>{module.lessons} lessons</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Ionicons name="trophy" size={16} color="#6B7280" />
-                <Text style={[styles.statText, { color: theme.textSecondary }]}>{module.difficulty}</Text>
-              </View>
-            </View>
-
-            <View style={styles.progressContainer}>
-              <View style={styles.progressInfo}>
-                <Text style={[styles.progressLabel, { color: theme.textSecondary }]}>Progress</Text>
-                <Text style={[styles.progressPercent, { color: theme.text }]}>{module.progress}%</Text>
-              </View>
-              <View style={[styles.progressBarContainer, { backgroundColor: theme.borderLight }]}>
-                <View 
-                  style={[
-                    styles.progressBarFill, 
-                    { width: `${module.progress}%`, backgroundColor: module.color }
-                  ]} 
-                />
-              </View>
-            </View>
+            <Ionicons name="expand" size={20} color="#3B82F6" />
           </TouchableOpacity>
         </View>
         <View style={styles.realARContainer}>
